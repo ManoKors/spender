@@ -8,7 +8,7 @@
 
 ## Thema
 
-<!-- Kurzbeschreibung in 2-3 SÃ¤tzen: Was ist die DomÃ¤ne, was soll das System kÃ¶nnen? -->
+<!-- Kurzbeschreibung in 2-3 Sätzen: Was ist die Domäne, was soll das System können? -->
 
 ## Dokumentation
 
@@ -20,4 +20,4 @@
 
 ## Reflexion
 
-<!-- PersÃ¶nlicher Reflexionsteil, je Teammitglied ein Abschnitt oder eine Datei. -->
+<!-- Persönlicher Reflexionsteil, je Teammitglied ein Abschnitt oder eine Datei. -->
