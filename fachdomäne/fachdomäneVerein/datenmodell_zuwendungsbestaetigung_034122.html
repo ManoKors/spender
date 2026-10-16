@@ -2558,43 +2558,51 @@ mermaid.initialize({
 });
 const { svg } = await mermaid.render('cd-svg', `classDiagram
 direction TB
-class Zuwendender {
-  Name
-  Anschrift
+
+namespace Vereinskontext {
+  class Zuwendungsempfaenger["Zuwendungsempfänger"] {
+    Bezeichnung
+    Anschrift
+  }
+  class Zweck["Steuerbegünstigter Zweck"] {
+    Wortlaut des Zwecks
+  }
+  class Bescheid["Gemeinnützigkeitsbescheid"] {
+    <<abstract>>
+    Finanzamt
+    Steuernummer
+    Datum des Bescheids
+  }
+  class Freistellungsbescheid {
+    Letzter Veranlagungszeitraum
+  }
+  class Feststellungsbescheid
 }
-class Zuwendungsempfaenger["Zuwendungsempfänger"] {
-  Bezeichnung
-  Anschrift
+
+namespace Zuwendungskontext {
+  class Zuwendender {
+    Name
+    Anschrift
+  }
+  class Geldzuwendung {
+    Zuwendungsart
+    Betrag
+    Tag der Zuwendung
+    Verzicht auf Erstattung
+  }
+  class Gegenleistungsverzichtserklaerung["Gegenleistungsverzichtserklärung"] {
+    Erklärungsdatum
+  }
+  class Zuwendungsbestaetigung["Zuwendungsbestätigung"] {
+    Betrag in Buchstaben
+    Bestätigung kein ausgeschlossener Mitgliedsbeitrag
+    Ausstellungsort
+    Ausstellungsdatum
+    Unterschrift
+    Muster
+  }
 }
-class Geldzuwendung {
-  Zuwendungsart
-  Betrag
-  Tag der Zuwendung
-  Verzicht auf Erstattung
-}
-class Gegenleistungsverzichtserklaerung["Gegenleistungsverzichtserklärung"] {
-  Erklärungsdatum
-}
-class Zuwendungsbestaetigung["Zuwendungsbestätigung"] {
-  Betrag in Buchstaben
-  Ausstellungsort
-  Ausstellungsdatum
-  Unterschrift
-  Muster
-}
-class Zweck["Steuerbegünstigter Zweck"] {
-  Wortlaut des Zwecks
-}
-class Bescheid["Gemeinnützigkeitsbescheid"] {
-  <<abstract>>
-  Finanzamt
-  Steuernummer
-  Datum des Bescheids
-}
-class Freistellungsbescheid {
-  Letzter Veranlagungszeitraum
-}
-class Feststellungsbescheid
+
 Zuwendender "1" -- "0..*" Geldzuwendung : leistet
 Zuwendungsempfaenger "1" -- "0..*" Geldzuwendung : empfängt
 Geldzuwendung "1" *-- "0..1" Gegenleistungsverzichtserklaerung : hat
