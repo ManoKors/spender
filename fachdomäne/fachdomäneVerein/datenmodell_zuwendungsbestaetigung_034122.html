@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>UML-Datenmodell: Zuwendungsbestätigung 034122</title>
+  <title>Atomares UML-Datenmodell: Zuwendungsbestätigung 034122</title>
   <!-- Standard Mermaid script (local offline first, CDN fallback) -->
   <script src="./mermaid.min.js"></script>
   <script>
@@ -17,7 +17,7 @@
       --bg: #ffffff;
       --text: #1a1a1a;
       --accent: #2563eb;
-      --diagram-max-width: 1500px;
+      --diagram-max-width: 1550px;
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -40,7 +40,7 @@
     }
     #diagram-container {
       width: 100%;
-      max-width: 1600px;
+      max-width: 1650px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -147,13 +147,27 @@
     .clickable-node text {
       font-weight: 600 !important;
     }
+    #error-log {
+      color: #dc2626;
+      background: #fee2e2;
+      border: 1px solid #f87171;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      max-width: 800px;
+      display: none;
+      white-space: pre-wrap;
+      font-family: monospace;
+      font-size: 0.85rem;
+    }
   </style>
 </head>
 <body>
 
   <div id="diagram-container">
+    <div id="error-log"></div>
     <div class="nav-bar" id="nav-bar">
-      <span id="nav-status">Modell: <strong>Level 1 (Gesamtübersicht)</strong></span>
+      <span id="nav-status">Modell: <strong>Level 1 (Atomare Gesamtübersicht)</strong></span>
       <span>•</span>
       <span id="nav-action">Tipp: Klicke auf <strong>Gemeinnützigkeitsbescheid 🔍</strong> für das Detailmodell</span>
       <div class="zoom-controls">
@@ -164,100 +178,151 @@
       </div>
     </div>
 
-    <!-- Level 1: Gesamtübersicht -->
+    <!-- Level 1: Atomare Gesamtübersicht -->
     <div id="wrapper-overview" class="diagram-wrapper">
       <pre class="mermaid" id="mermaid-overview">
 classDiagram
 direction TB
 
-namespace Vereinskontext {
+namespace Stammdaten {
+  class Adresse {
+    +String strasse
+    +String hausnummer
+    +String plz
+    +String ort
+    +String land
+  }
+
   class Zuwendungsempfaenger["Zuwendungsempfänger"] {
-    Bezeichnung
-    Anschrift
+    +String bezeichnung
+    +String steuernummer
+    +String finanzamt
+    +String rechtsform
   }
-  class Zweck["Steuerbegünstigter Zweck"] {
-    Wortlaut des Zwecks
+
+  class Spender["Zuwendender (Spender)"] {
+    +String name
+    +String spenderArt
   }
-  class Bescheid["Gemeinnützigkeitsbescheid 🔍"] {
-    Finanzamt
-    Steuernummer
-    Datum des Bescheids
-    Bescheidart: Freistellung oder Feststellung
+
+  class SteuerbeguenstigterZweck["Steuerbegünstigter Zweck"] {
+    +String paragraf
+    +String bezeichnung
+    +Boolean istAusschlussZweck
   }
 }
 
-namespace Zuwendungskontext {
-  class Spender["Spender"] {
-    Name
-    Anschrift
-  }
-  class Geldzuwendung {
-    Zuwendungsart
-    Betrag
-    Tag der Zuwendung
-    Verzicht auf Erstattung
-  }
-  class Gegenleistungsverzichtserklaerung["Gegenleistungsverzichtserklärung"] {
-    Erklärungsdatum
-  }
-  class Zuwendungsbestaetigung["Zuwendungsbestätigung"] {
-    Betrag in Buchstaben
-    Bestätigung kein ausgeschlossener Mitgliedsbeitrag
-    Ausstellungsort
-    Ausstellungsdatum
-    Unterschrift
-    Muster
+namespace Bescheidwesen {
+  class Gemeinnuetzigkeitsbescheid["Gemeinnützigkeitsbescheid 🔍"] {
+    &lt;&lt;abstract&gt;&gt;
+    +Date bescheidDatum
+    +String finanzamt
+    +String steuernummer
+    +istGueltigAm(Date datum) Boolean
   }
 }
+
+namespace TransaktionUndNachweis {
+  class Geldzuwendung {
+    &lt;&lt;abstract&gt;&gt;
+    +Decimal betrag
+    +String waehrung
+    +Date zuwendungsDatum
+  }
+
+  class Geldspende {
+    +Boolean istAufwandsspende
+  }
+
+  class Mitgliedsbeitrag {
+    +Integer beitragsJahr
+  }
+
+  class Zuwendungsbestaetigung["Zuwendungsbestätigung"] {
+    +String bestaetigungsNummer
+    +Date ausstellungsDatum
+    +String ausstellungsOrt
+    +String betragInWorten
+    +Boolean keinAusschlussBeitrag
+    +String unterschrift
+  }
+
+  class Gegenleistungsverzichtserklaerung["Gegenleistungsverzichtserklärung"] {
+    +Date erklaerungsDatum
+    +String verzichtAufAnspruch
+  }
+}
+
+Zuwendungsempfaenger *-- "1" Adresse : sitz
+Spender *-- "1" Adresse : anschrift
 
 Spender "1" -- "0..*" Geldzuwendung : leistet
-Zuwendungsempfaenger "1" -- "0..*" Geldzuwendung : empfängt
-Geldzuwendung "1" *-- "0..1" Gegenleistungsverzichtserklaerung : hat
-Geldzuwendung "1" -- "0..1" Zuwendungsbestaetigung : wird bestätigt durch
+Zuwendungsempfaenger "1" -- "0..*" Geldzuwendung : empfaengt
 
-Zuwendungsbestaetigung "0..*" -- "1" Bescheid : nennt
-Zuwendungsempfaenger "1" -- "0..*" Bescheid : erhält
-Zuwendungsempfaenger "0..*" o-- "1..*" Zweck : Satzungszweck
-Zuwendungsbestaetigung "0..*" -- "1..*" Zweck : bestätigter Zweck
-Bescheid "0..*" -- "1..*" Zweck : bescheinigter Zweck
+Geldzuwendung <|-- Geldspende
+Geldzuwendung <|-- Mitgliedsbeitrag
+
+Geldspende "1" o-- "0..1" Gegenleistungsverzichtserklaerung : belegt_verzicht
+
+Zuwendungsbestaetigung "0..1" --> "1" Geldzuwendung : bescheinigt
+Zuwendungsbestaetigung "0..*" --> "1" Gemeinnuetzigkeitsbescheid : nennt
+Zuwendungsbestaetigung "0..*" --> "1..*" SteuerbeguenstigterZweck : foerdert
+Gemeinnuetzigkeitsbescheid "0..*" --> "1..*" SteuerbeguenstigterZweck : beguenstigt
+Zuwendungsempfaenger "1" --> "1..*" SteuerbeguenstigterZweck : satzungszweck
+Zuwendungsempfaenger "1" *-- "1..*" Gemeinnuetzigkeitsbescheid : erhaelt
       </pre>
     </div>
 
-    <!-- Level 2: Detailmodell Gemeinnützigkeitsbescheid -->
+    <!-- Level 2: Detailmodell Gemeinnützigkeitsbescheid & Fristen -->
     <div id="wrapper-bescheid" class="diagram-wrapper initial-offscreen">
       <pre class="mermaid" id="mermaid-bescheid">
 classDiagram
 direction TB
 
-class Zuwendungsempfaenger["Zuwendungsempfänger"]
-class Bescheid["Gemeinnützigkeitsbescheid"]
-class Zweck["Steuerbegünstigter Zweck"]
-class Zuwendungsbestaetigung["Zuwendungsbestätigung"]
-class Freistellungsbescheid
-class Feststellungsbescheid
+class Zuwendungsempfaenger["Zuwendungsempfänger"] {
+  +String bezeichnung
+  +String steuernummer
+  +String finanzamt
+}
 
-Zuwendungsempfaenger : Bezeichnung
-Zuwendungsempfaenger : Anschrift
+class Gemeinnuetzigkeitsbescheid["Gemeinnützigkeitsbescheid"] {
+  &lt;&lt;abstract&gt;&gt;
+  +String finanzamt
+  +String steuernummer
+  +Date bescheidDatum
+  +istGueltigAm(Date datum) Boolean
+}
 
-Bescheid : Finanzamt
-Bescheid : Steuernummer
-Bescheid : Datum des Bescheids
+class Freistellungsbescheid {
+  +Integer letzterVeranlagungszeitraum
+  +istGueltigAm(Date datum) Boolean
+}
+note for Freistellungsbescheid "Fristregel Paragraph 63 Abs 5 AO: Maximal 5 Jahre ab Bescheiddatum gueltig"
 
-Freistellungsbescheid : Letzter Veranlagungszeitraum
-Freistellungsbescheid : Gueltigkeit max 5 Jahre nach Paragraph 63 Abs 5 AO
+class Feststellungsbescheid {
+  +String rechtsgrundlage
+  +istGueltigAm(Date datum) Boolean
+}
+note for Feststellungsbescheid "Fristregel Paragraph 60a AO: Maximal 3 Jahre ab Feststellung gueltig"
 
-Feststellungsbescheid : Rechtsgrundlage Paragraph 60a AO
-Feststellungsbescheid : Gueltigkeit max 3 Jahre nach Feststellung
+class SteuerbeguenstigterZweck["Steuerbegünstigter Zweck"] {
+  +String paragraf
+  +String bezeichnung
+}
 
-Zweck : Wortlaut des Zwecks
-Zuwendungsbestaetigung : Ausstellungsdatum
+class Zuwendungsbestaetigung["Zuwendungsbestätigung"] {
+  +Date ausstellungsDatum
+  +pruefeBescheidGueltigkeit() Boolean
+}
+note for Zuwendungsbestaetigung "Constraint: Genau ein gueltiger Bescheid zum Ausstellungsdatum"
 
-Zuwendungsempfaenger "1" -- "0..*" Bescheid : erhält
-Bescheid <|-- Freistellungsbescheid
-Bescheid <|-- Feststellungsbescheid
-Bescheid "0..*" -- "1..*" Zweck : bescheinigter Zweck
-Zuwendungsempfaenger "0..*" o-- "1..*" Zweck : Satzungszweck
-Zuwendungsbestaetigung "0..*" -- "1" Bescheid : nennt
+Zuwendungsempfaenger "1" *-- "1..*" Gemeinnuetzigkeitsbescheid : erhaelt
+Gemeinnuetzigkeitsbescheid <|-- Freistellungsbescheid
+Gemeinnuetzigkeitsbescheid <|-- Feststellungsbescheid
+Gemeinnuetzigkeitsbescheid "0..*" --> "1..*" SteuerbeguenstigterZweck : beguenstigt
+Zuwendungsempfaenger "1" --> "1..*" SteuerbeguenstigterZweck : satzungszweck
+Zuwendungsbestaetigung "0..*" --> "1" Gemeinnuetzigkeitsbescheid : nennt
+Zuwendungsbestaetigung "0..*" --> "1..*" SteuerbeguenstigterZweck : foerdert
       </pre>
     </div>
   </div>
@@ -266,6 +331,15 @@ Zuwendungsbestaetigung "0..*" -- "1" Bescheid : nennt
     const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 
     if (typeof mermaid !== 'undefined') {
+      mermaid.parseError = function(err, hash) {
+        const errLog = document.getElementById('error-log');
+        if (errLog) {
+          errLog.style.display = 'block';
+          errLog.textContent = 'Mermaid Parse Error: ' + err;
+        }
+        console.error('Mermaid Parse Error:', err, hash);
+      };
+
       mermaid.initialize({
         startOnLoad: true,
         theme: isDark ? 'dark' : 'default',
@@ -283,7 +357,7 @@ Zuwendungsbestaetigung "0..*" -- "1" Bescheid : nennt
         overviewWrap.classList.add('hidden');
         bescheidWrap.classList.remove('hidden');
         bescheidWrap.classList.remove('initial-offscreen');
-        navStatus.innerHTML = 'Modell: <strong>Level 2 (Detail: Gemeinnützigkeitsbescheid)</strong>';
+        navStatus.innerHTML = 'Modell: <strong>Level 2 (Detail: Gemeinnützigkeitsbescheid & Fristen)</strong>';
         navAction.innerHTML = '<span class="nav-link" onclick="showView(\'overview\')">← Zurück zur Gesamtübersicht</span>';
         if (updateHash && window.location.hash !== '#bescheid') {
           history.pushState(null, '', '#bescheid');
@@ -291,7 +365,7 @@ Zuwendungsbestaetigung "0..*" -- "1" Bescheid : nennt
       } else {
         bescheidWrap.classList.add('hidden');
         overviewWrap.classList.remove('hidden');
-        navStatus.innerHTML = 'Modell: <strong>Level 1 (Gesamtübersicht)</strong>';
+        navStatus.innerHTML = 'Modell: <strong>Level 1 (Atomare Gesamtübersicht)</strong>';
         navAction.innerHTML = 'Tipp: Klicke auf <strong>Gemeinnützigkeitsbescheid 🔍</strong> für das Detailmodell';
         if (updateHash && window.location.hash !== '' && window.location.hash !== '#overview') {
           history.pushState(null, '', '#overview');
@@ -307,14 +381,14 @@ Zuwendungsbestaetigung "0..*" -- "1" Bescheid : nennt
     });
 
     let currentZoom = 1.0;
-    const baseMaxWidth = 1500;
+    const baseMaxWidth = 1550;
 
     function updateZoom() {
       const newWidth = Math.round(baseMaxWidth * currentZoom);
       document.documentElement.style.setProperty('--diagram-max-width', newWidth + 'px');
       const container = document.getElementById('diagram-container');
       if (container) {
-        container.style.maxWidth = Math.max(1600, newWidth + 80) + 'px';
+        container.style.maxWidth = Math.max(1650, newWidth + 80) + 'px';
       }
       const indicator = document.getElementById('zoom-indicator');
       if (indicator) {
@@ -349,7 +423,9 @@ Zuwendungsbestaetigung "0..*" -- "1" Bescheid : nennt
       if (overviewSvg) {
         const nodes = overviewSvg.querySelectorAll('g.node');
         nodes.forEach(node => {
-          if (node.textContent.includes('Gemeinnützigkeitsbescheid') || (node.id && node.id.includes('Bescheid'))) {
+          const txt = node.textContent || '';
+          const id = node.id || '';
+          if (txt.includes('Gemeinnützigkeitsbescheid') || txt.includes('Gemeinnuetzigkeitsbescheid') || id.includes('Bescheid') || id.includes('Gemeinnuetzigkeitsbescheid')) {
             node.classList.add('clickable-node');
             node.setAttribute('title', 'Klicken für Drill-Down in das Bescheid-Detailmodell');
             node.addEventListener('click', () => showView('bescheid'));
@@ -362,7 +438,9 @@ Zuwendungsbestaetigung "0..*" -- "1" Bescheid : nennt
       if (bescheidSvg) {
         const nodes = bescheidSvg.querySelectorAll('g.node');
         nodes.forEach(node => {
-          if (node.textContent.includes('Zuwendungsempfänger') || (node.id && node.id.includes('Zuwendungsempfaenger'))) {
+          const txt = node.textContent || '';
+          const id = node.id || '';
+          if (txt.includes('Zuwendungsempfänger') || txt.includes('Zuwendungsempfaenger') || id.includes('Zuwendungsempfaenger')) {
             node.classList.add('clickable-node');
             node.setAttribute('title', 'Klicken: Zurück zur Gesamtübersicht');
             node.addEventListener('click', () => showView('overview'));

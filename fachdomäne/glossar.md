@@ -1,4 +1,4 @@
-# Glossar der Fachdomäne: Steuerliche Spenden-Compliance !
+# Glossar der Fachdomäne: Steuerliche Spenden-Compliance
 
 Das fachliche Glossar definiert die zentralen Geschäftsobjekte (GO) und ihre Attribute für die steuerliche Geltendmachung von Spenden, steuerrechtliche Compliance und Belegprüfung im Vereins- und Universitätskontext.
 
