@@ -8,15 +8,35 @@
 
 ## Thema
 
-<!-- Kurzbeschreibung in 2-3 Sätzen: Was ist die Domäne, was soll das System können? -->
+Automatisierung der steuerrechtlichen Compliance und Belegprüfung für Geld- und Sachzuwendungen im Vereins- und Universitätskontext. Das System unterstützt die Prüfung der steuerlichen Voraussetzungen (Bescheide, Fristen, Satzungszwecke) und die rechtssichere Ausstellung von Zuwendungsbestätigungen nach amtlichem BMF-Muster (034122).
 
 ## Dokumentation
 
-<!-- Domain Exploration, Architektur, Entscheidungen. Gern in docs/ ablegen und hier verlinken. -->
+### Fachkonzept & Domain Exploration
+* [Fachdomänenbeschreibung](fachdomäne/beschreibung.md) – Kontext und Zielsetzung des Systems.
+* [Glossar](fachdomäne/glossar.md) – Geschäftsobjekte und Attribute im Singular.
+* [Datenmodell & OCL-Constraints](fachdomäne/fachdomäneVerein/datenmodell.md) – Atomares UML-Modell und formale Invarianten nach BMF-Muster 034122.
+* [Interaktives Datenmodell](fachdomäne/fachdomäneVerein/datenmodell_zuwendungsbestaetigung_034122.html) – Visuelle Darstellung der Modellstufen (Level 1 & Level 2).
+* [Prozesstabelle & Use Cases](fachdomäne/fachdomäneVerein/prozesstabelle.md) – Detaillierte Ablaufbeschreibung für „Voraussetzungen prüfen".
+
+### Technische Architektur & Entscheidungen
+* [Architektur & Modellierung](docs/architektur.md) – Tech-Stack (Kotlin/Gradle/JUnit 5), DDD-Struktur und Testkonzept.
+* [Architekturentscheidungen (ADR)](docs/entscheidungen.md) – Entscheidungsdokumente zu Technologien, Fristkapselung und TDD.
+* [Changelog](CHANGELOG.md) – Meilensteine und Release-Historie nach Keep a Changelog.
 
 ## Setup und Start
 
-<!-- Wie baut und startet man das Projekt? -->
+Das Projekt verwendet **Kotlin** mit **Gradle** (Kotlin DSL) und **Java 21**.
+
+### Tests ausführen
+```bash
+./gradlew test
+```
+
+### Projekt bauen
+```bash
+./gradlew build
+```
 
 ## Reflexion
 
