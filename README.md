@@ -24,9 +24,18 @@ Automatisierung der steuerrechtlichen Compliance und Belegprüfung für Geld- un
 * [Architekturentscheidungen (ADR)](docs/entscheidungen.md) – Entscheidungsdokumente zu Technologien, Fristkapselung und TDD.
 * [Changelog](CHANGELOG.md) – Meilensteine und Release-Historie nach Keep a Changelog.
 
+### Demos & Prototypen
+* [Interaktiver White-Label Spenden-Wizard](demo/spenden_wizard.html) – Voll funktionsfähiger Web-Wizard mit Mandanten-Umschaltung, Gegenleistungsverzicht und echtem EPC-GiroCode (QR-Code zum Scannen mit Banking-Apps).
+* [Interaktives Datenmodell](fachdomäne/fachdomäneVerein/datenmodell_zuwendungsbestaetigung_034122.html) – Visuelle Darstellung der Modellstufen (Level 1 & Level 2).
+
 ## Setup und Start
 
 Das Projekt verwendet **Kotlin** mit **Gradle** (Kotlin DSL) und **Java 21**.
+
+### Interaktive Demo ausführen
+```bash
+./gradlew run
+```
 
 ### Tests ausführen
 ```bash

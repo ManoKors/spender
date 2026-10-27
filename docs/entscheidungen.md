@@ -61,3 +61,47 @@ Alle Prüfschritte aus der Prozesstabelle ([`fachdomäne/fachdomäneVerein/proze
 * **Vorteile:**
   * Sehr hohe Testabdeckung der steuerlichen Randbedingungen.
   * Nachvollziehbarer Nachweis der Compliance-Funktionen.
+
+---
+
+## ADR 04: Hexagonale Architektur (Ports & Adapters)
+
+* **Status:** Angenommen
+* **Datum:** 2026-10-27
+
+### Kontext
+Die Anwendung kombiniert langlebige steuerrechtliche Fachlogik (Bescheidfristen, Zweckprüfungen, Gegenleistungsverzicht) mit verschiedenen Interaktionsformen (Web-Spenden-Wizard, Kassenwart-Backoffice, Dokumentenausgabe). Die Fachlogik darf nicht von Web-Frameworks, Datenbanken oder PDF-Renderern abhängen.
+
+### Entscheidung
+Wir strukturieren die Codebasis nach der **Hexagonalen Architektur (Ports & Adapters)** in:
+* `domain`: Vollkommen unabhängiger Kern mit Entitäten, Value Objects und Domain Services.
+* `application`: Inbound/Outbound-Ports und Application Services (Use Cases).
+* `adapter`: Primäre Adapter (Web/CLI) und sekundäre Adapter (Persistenz, PDF-Erzeugung).
+
+### Konsequenzen
+* **Vorteile:**
+  * Maximale Testbarkeit: Use Cases und Invarianten können ohne Frameworks, Server oder echte Datenbanken mit In-Memory-Fakes getestet werden.
+  * Austauschbarkeit der Ein- und Ausgänge (z. B. Spenden-Wizard als REST-API oder Server-Side-Rendering, PDF-Renderer austauschbar).
+* **Nachteile:**
+  * Zusätzliche Schnittstellen (Port-Interfaces) und Übersetzungsschichten (DTOs/Commands).
+
+---
+
+## ADR 05: Standardkonforme EPC-GiroCode-Generierung für Spendenabsichten
+
+* **Status:** Angenommen
+* **Datum:** 2026-10-27
+
+### Kontext
+Beim Spendenvorgang über den White-Label-Wizard soll der Spender eine bequeme, fehlerfreie Überweisungsmöglichkeit erhalten. Ein eindeutiger Verwendungszweck (Referenzcode) muss garantiert sein, damit der spätere Geldeingang automatisiert mit der Spendenabsicht verknüpft werden kann.
+
+### Entscheidung
+Das System generiert bei jeder Spendenabsicht die standardkonformen Nutzdaten nach **EPC069-08** (European Payments Council Quick Response Code). Die Generierung erfolgt als reiner Domain Service (`GiroCodeGenerator`) ohne externe Bibliotheken.
+
+### Konsequenzen
+* **Vorteile:**
+  * Kompatibel mit nahezu allen gängigen Banking-Apps im SEPA-Raum (Sparkassen, Volksbanken, DKB, ING etc.).
+  * Verhindert Tippfehler bei IBAN und Verwendungszweck.
+  * Keine Bindung an externe Zahlungsdienstleister (keine Gebühren, kein Vendor-Lock-in).
+* **Nachteile:**
+  * Überweisung erfolgt asynchron über die Bank des Spenders (Zahlungseingang muss auf dem Vereinskonto bestätigt werden).

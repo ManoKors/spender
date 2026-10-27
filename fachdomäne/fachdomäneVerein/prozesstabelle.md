@@ -143,3 +143,53 @@ Dieser Use Case ist im Use-Case-Diagramm per «include» an „Zuwendungsbestät
 3. **Frist des Bescheids:** Das vorliegende Formular spricht von der Zeit „seit Ausstellung des Bescheides". Andere Fassungen beziehen sich auf die Ausstellung der Bestätigung. Siehe offene Punkte im Glossar (Abschnitt 5, Punkt 1).
 4. **Prüfergebnis:** Der Begriff ist hier informell verwendet. Wenn ihr ihn dauerhaft speichern wollt, gehört er als eigenes Objekt (z. B. Prüfprotokoll) ins Glossar und ins Datenmodell.
 5. **Nicht ausgearbeitet:** Verzicht auf Erstattung von Aufwendungen (Aufwandsspende), Sachspenden und Sammelbestätigungen.
+
+---
+
+## Teil 3: Use Case „Spendenabsicht über White-Label-Wizard erfassen"
+
+Dieser Use Case bildet die Schnittstelle zur spendenwilligen Person. Er sorgt für die Vorab-Erfassung vollständiger Daten (Name, Anschrift für die Quittung), sichert die Gegenleistungsfreiheit rechtlich ab und erzeugt einen standardisierten EPC-GiroCode für fehlerfreie Banküberweisungen.
+
+### Header
+
+| Feld | Eintrag |
+|---|---|
+| Name | Spendenabsicht über White-Label-Wizard erfassen |
+| Auslösender Akteur | Spendenwillige Person (Besucher der Vereins-Spendenwebseite) |
+| Weitere Akteure | Verein (Zuwendungsempfänger als Mandant) |
+| Auslöser | Spender ruft den White-Label-Spenden-Wizard unter der vereinsindividuellen URL auf (z. B. `/spenden/{slug}`). |
+| Vorbedingung | Der Verein ist im System angelegt, besitzt eine gültige Bankverbindung (IBAN, BIC) sowie ein aktives White-Label-Profil. Mindestens ein steuerbegünstigter Satzungszweck ist erfasst. |
+| Nachbedingung | Die Spendenabsicht ist im Status „ANGEKUENDIGT" gespeichert. Der Spender erhält einen eindeutigen Verwendungszweck (Referenzcode) und einen EPC-GiroCode zur Ausführung der Überweisung. |
+
+### Hauptszenario (Happy Path)
+
+| Nr. | Schritt |
+|---|---|
+| 1. | Das Tool lädt das White-Label-Profil des Vereins anhand des Slugs (Logo, Primärfarbe, Titel, Dankestext). |
+| 2. | Der Spender wählt den gewünschten Spendenbetrag (z. B. 50 €, 100 € oder freier Betrag) und einen der geförderten Satzungszwecke aus. |
+| 3. | Der Spender erfasst seine Kontaktdaten (Vor- und Nachname, postalische Anschrift für die spätere Zuwendungsbestätigung, optionale E-Mail-Adresse). |
+| 4. | Der Spender bestätigt aktiv per Checkbox die Gegenleistungsverzichtserklärung (Gegenleistungsfreiheit gemäß steuerrechtlicher Vorgabe). |
+| 5. | Das Tool generiert einen eindeutigen Referenzcode (z. B. `SP-2026-4821`), erzeugt den standardkonformen EPC-GiroCode-Payload (SEPA) und speichert die Spendenabsicht im Status `ANGEKUENDIGT`. |
+| 6. | Das Tool zeigt dem Spender die Überweisungsdaten (IBAN, Empfänger, Betrag, Verwendungszweck) sowie den scannbaren QR-Code (GiroCode) an. |
+
+### Alternativszenario
+
+| Nr. | Schritt |
+|---|---|
+| 3a | *Der Spender gibt keine E-Mail-Adresse an.* |
+| 3a1 | Das Tool weist darauf hin, dass die Zuwendungsbestätigung dann ausschließlich postalisch zugestellt werden kann. |
+| 3a2 | Weiter bei Schritt 4. |
+
+### Ausnahmeszenario
+
+| Nr. | Schritt |
+|---|---|
+| 1a | *Der aufgerufene Verein (Slug) existiert nicht oder ist deaktiviert.* |
+| 1a1 | Das Tool zeigt eine 404-Fehlerseite an und bricht den Vorgang ab. |
+| 1a2 | NB: Es wird keine Spendenabsicht angelegt. |
+| 2a | *Der Spendenbetrag ist kleiner oder gleich 0 €.* |
+| 2a1 | Das Tool weist den unzulässigen Betrag zurück und fordert zur Korrektur auf. |
+| 2a2 | NB: Der Spender verbleibt im Eingabeschritt. |
+| 4a | *Der Spender bestätigt die Gegenleistungsfreiheit nicht.* |
+| 4a1 | Das Tool informiert, dass ohne Gegenleistungsverzicht keine steuerabzugsfähige Spende deklariert werden darf. |
+| 4a2 | NB: Es wird keine Spendenabsicht erzeugt; der Vorgang bricht ab. |

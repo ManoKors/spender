@@ -14,7 +14,7 @@ Das Modell ist streng nach den Prinzipien des **Domain-Driven Designs (DDD)** un
 
 ## Level 1: Atomare Gesamtübersicht
 
-Konzentriert sich auf den Kernprozess: Der Zuwendende leistet eine Zuwendung (Spende oder Mitgliedsbeitrag), der Verein als Zuwendungsempfänger prüft Satzungszwecke sowie Bescheide und stellt die Zuwendungsbestätigung aus.
+Konzentriert sich auf den Gesamtprozess von der Vorankündigung im White-Label-Spenden-Wizard bis zur Bestätigung: Der Spender durchläuft den vereinsgebrandeten Wizard (Spendenabsicht mit EPC-GiroCode und Verzichtserklärung), tätigt die Geldspende, und das System prüft Satzungszwecke sowie Bescheide für die Zuwendungsbestätigung.
 
 ```mermaid
 classDiagram
@@ -34,17 +34,47 @@ namespace Stammdaten {
     +steuernummer: String
     +finanzamt: String
     +rechtsform: String = "e. V."
+    +iban: String
+    +bic: String
+    +kontoinhaber: String
+  }
+
+  class WhiteLabelKonfiguration["White-Label-Konfiguration"] {
+    +slug: String
+    +wizardTitel: String
+    +logoUrl: String
+    +primaerFarbe: String
+    +dankesNachricht: String
   }
 
   class Spender["Zuwendender (Spender)"] {
     +name: String
     +spenderArt: String
+    +email: String
   }
 
   class SteuerbeguenstigterZweck["Steuerbegünstigter Zweck (§ 52 AO)"] {
     +paragraf: String
     +bezeichnung: String
     +istAusschlussZweck: Boolean
+  }
+}
+
+namespace SpendenWizard {
+  class SpendenabsichtStatus {
+    <<enumeration>>
+    ANGEKUENDIGT
+    EINGEGANGEN
+    ABGELAUFEN
+  }
+
+  class Spendenabsicht["Spendenabsicht (Pledge)"] {
+    +referenzCode: String
+    +betrag: Decimal
+    +erstellungsDatum: DateTime
+    +status: SpendenabsichtStatus
+    +giroCodePayload: String
+    +generiereGiroCode(): String
   }
 }
 
@@ -83,14 +113,22 @@ namespace TransaktionUndNachweis {
     +unterschrift: String
   }
 
-  class Gegenleistungsverzichtserklaerung["Verzichtserklärung (Aufwand)"] {
+  class Gegenleistungsverzichtserklaerung["Verzichtserklärung (Aufwand/Gegenleistung)"] {
     +erklaerungsDatum: Date
     +verzichtAufAnspruch: String
+    +istGegenleistungsfrei: Boolean = true
   }
 }
 
+Zuwendungsempfaenger *-- "1" WhiteLabelKonfiguration : branding
 Zuwendungsempfaenger *-- "1" Adresse : sitz
 Spender *-- "1" Adresse : postanschrift
+
+Zuwendungsempfaenger "1" -- "0..*" Spendenabsicht : hostet_fuer
+Spender "1" -- "0..*" Spendenabsicht : deklariert
+Spendenabsicht "1" --> "1" SteuerbeguenstigterZweck : widmet_fuer
+Spendenabsicht "1" o-- "1" Gegenleistungsverzichtserklaerung : enthaelt
+Spendenabsicht "0..1" --> "0..1" Geldspende : resultiert_in
 
 Spender "1" -- "0..*" Geldzuwendung : leistet
 Zuwendungsempfaenger "1" -- "0..*" Geldzuwendung : empfängt
@@ -218,4 +256,24 @@ Die nachfolgenden formalen Integritätsbedingungen sichern die steuerrechtliche 
    context Zuwendungsbestaetigung
    inv BetragStimmig:
      self.betragInWorten = formatInWords(self.geldzuwendung.betrag)
+   ```
+
+7. **Gegenleistungsfreiheit im Spenden-Wizard:**
+   Jede im Wizard erfasste Spendenabsicht muss eine bestätigte Gegenleistungsverzichtserklärung enthalten:
+   ```ocl
+   context Spendenabsicht
+   inv VerzichtErklaert:
+     self.gegenleistungsverzichtserklaerung->notEmpty() and
+     self.gegenleistungsverzichtserklaerung.istGegenleistungsfrei = true
+   ```
+
+8. **Konsistenz bei Realisierung der Spende:**
+   Wird eine Geldspende auf Basis einer Spendenabsicht verbucht, müssen Betrag und Zuwendungsempfänger exakt übereinstimmen:
+   ```ocl
+   context Geldspende
+   inv AbsichtUebereinstimmung:
+     self.spendenabsicht->notEmpty() implies
+       (self.betrag = self.spendenabsicht.betrag and
+        self.zuwendungsempfaenger = self.spendenabsicht.zuwendungsempfaenger and
+        self.spendenabsicht.status = SpendenabsichtStatus::EINGEGANGEN)
    ```

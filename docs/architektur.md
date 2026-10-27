@@ -16,23 +16,86 @@ Dieses Dokument beschreibt die technische Architektur, die eingesetzten Technolo
 
 ---
 
-## 2. Struktur des Domänenmodells (Domain-Driven Design)
+## 2. Hexagonale Architektur (Ports & Adapters) und Domain-Driven Design (DDD)
 
-Das Softwaredesign orientiert sich streng an den fachlichen Geschäftsobjekten und OCL-Constraints aus [`fachdomäne/fachdomäneVerein/datenmodell.md`](file:///Users/mano/Desktop/Projekte/AD26-Team07/fachdomäne/fachdomäneVerein/datenmodell.md).
+Das System folgt streng den Prinzipien der **Hexagonalen Architektur**. Abhängigkeiten zeigen grundsätzlich von außen nach innen zum fachlichen Domänenkern:
+
+```mermaid
+flowchart TD
+  subgraph Adapter In ["Adapter (Inbound / Driving)"]
+    WebWizard["Web-UI: Spenden-Wizard (/spenden/{slug})"]
+    Cli["CLI / Batch-Import"]
+  end
+
+  subgraph Application ["Application (Use Cases & Ports)"]
+    InPort["Driving Ports: RegistriereSpendenabsichtUseCase"]
+    AppService["Application Service: SpendenabsichtService"]
+    OutPort["Driven Ports: SpendenabsichtRepositoryPort, VereinRepositoryPort"]
+  end
+
+  subgraph Domain ["Domain (Kern)"]
+    Model["Entities & Value Objects: Zuwendungsempfaenger, Spendenabsicht, Spender, Bescheide"]
+    DomainService["Domain Services: GiroCodeGenerator (EPC069-08)"]
+  end
+
+  subgraph Adapter Out ["Adapter (Outbound / Driven)"]
+    Persistence["Persistence Adapter (InMemory / SQL)"]
+    PdfOut["Dokumenten-Adapter (Muster 034122 PDF)"]
+  end
+
+  WebWizard --> InPort
+  Cli --> InPort
+  InPort --> AppService
+  AppService --> Domain
+  AppService --> OutPort
+  OutPort --> Persistence
+  OutPort --> PdfOut
+```
 
 ### Paketstruktur
 ```text
 src/
 ├── main/
 │   └── kotlin/
-│       └── de/ad26/team07/verein/
-│           ├── Gemeinnuetzigkeitsbescheid.kt   // Bescheidwesen & Fristprüfungen
-│           ├── ...                             // Weitere Fachobjekte (Spender, Zuwendung, etc.)
+│       └── de/ad26/team07/
+│           ├── domain/                               // KERN: Fachlogik & Invarianten
+│           │   ├── model/
+│           │   │   ├── Gemeinnuetzigkeitsbescheid.kt // Freistellungs- & Feststellungsbescheid
+│           │   │   ├── Adresse.kt                    // Value Object
+│           │   │   ├── SteuerbeguenstigterZweck.kt   // Value Object (§ 52 AO)
+│           │   │   ├── Spender.kt                    // Entity/VO (Name, Anschrift, E-Mail)
+│           │   │   ├── WhiteLabelKonfiguration.kt    // Slug, Branding, Farben
+│           │   │   ├── Zuwendungsempfaenger.kt       // Verein mit Bankverbindung (IBAN/BIC)
+│           │   │   ├── Gegenleistungsverzichtserklaerung.kt // Verzicht & Gegenleistungsfreiheit
+│           │   │   ├── SpendenabsichtStatus.kt       // ANGEKUENDIGT, EINGEGANGEN, ABGELAUFEN
+│           │   │   └── Spendenabsicht.kt             // Pledge mit Referenzcode & GiroCode
+│           │   └── service/
+│           │       └── GiroCodeGenerator.kt          // SEPA EPC069-08 Generator
+│           ├── application/                          // USE CASES & PORTS
+│           │   ├── port/
+│           │   │   ├── in/                           // Driving Ports
+│           │   │   │   ├── RegistriereSpendenabsichtUseCase.kt
+│           │   │   │   └── RegistriereSpendenabsichtCommand.kt
+│           │   │   └── out/                          // Driven Ports
+│           │   │       ├── SpendenabsichtRepositoryPort.kt
+│           │   │       └── VereinRepositoryPort.kt
+│           │   └── service/
+│           │       └── SpendenabsichtService.kt      // Orchestrierung der Spendenabsicht
+│           └── adapter/                              // INFRASTRUKTUR & AUSSENWELT
+│               ├── in/                               // Web / REST / CLI
+│               └── out/                              // Persistence / PDF / Mail
 └── test/
     └── kotlin/
-        └── de/ad26/team07/verein/
-            ├── GemeinnuetzigkeitsbescheidTest.kt // Unit-Tests für Bescheidfristen
-            └── ...
+        └── de/ad26/team07/
+            ├── domain/
+            │   ├── model/
+            │   │   ├── GemeinnuetzigkeitsbescheidTest.kt
+            │   │   └── SpendenabsichtTest.kt
+            │   └── service/
+            │       └── GiroCodeGeneratorTest.kt
+            └── application/
+                └── service/
+                    └── SpendenabsichtServiceTest.kt
 ```
 
 ### Abbildung von Fachregeln im Code

@@ -193,22 +193,52 @@ namespace Stammdaten {
     +String land
   }
 
-  class Zuwendungsempfaenger["Zuwendungsempfänger"] {
+  class Zuwendungsempfaenger["Zuwendungsempfänger (Verein)"] {
     +String bezeichnung
     +String steuernummer
     +String finanzamt
     +String rechtsform
+    +String iban
+    +String bic
+    +String kontoinhaber
+  }
+
+  class WhiteLabelKonfiguration["White-Label-Konfiguration"] {
+    +String slug
+    +String wizardTitel
+    +String logoUrl
+    +String primaerFarbe
+    +String dankesNachricht
   }
 
   class Spender["Zuwendender (Spender)"] {
     +String name
     +String spenderArt
+    +String email
   }
 
   class SteuerbeguenstigterZweck["Steuerbegünstigter Zweck"] {
     +String paragraf
     +String bezeichnung
     +Boolean istAusschlussZweck
+  }
+}
+
+namespace SpendenWizard {
+  class SpendenabsichtStatus {
+    &lt;&lt;enumeration&gt;&gt;
+    ANGEKUENDIGT
+    EINGEGANGEN
+    ABGELAUFEN
+  }
+
+  class Spendenabsicht["Spendenabsicht (Pledge)"] {
+    +String referenzCode
+    +Decimal betrag
+    +Date erstellungsDatum
+    +SpendenabsichtStatus status
+    +String giroCodePayload
+    +generiereGiroCode() String
   }
 }
 
@@ -247,14 +277,22 @@ namespace TransaktionUndNachweis {
     +String unterschrift
   }
 
-  class Gegenleistungsverzichtserklaerung["Gegenleistungsverzichtserklärung"] {
+  class Gegenleistungsverzichtserklaerung["Verzichtserklärung (Aufwand/Gegenleistung)"] {
     +Date erklaerungsDatum
     +String verzichtAufAnspruch
+    +Boolean istGegenleistungsfrei
   }
 }
 
+Zuwendungsempfaenger *-- "1" WhiteLabelKonfiguration : branding
 Zuwendungsempfaenger *-- "1" Adresse : sitz
 Spender *-- "1" Adresse : anschrift
+
+Zuwendungsempfaenger "1" -- "0..*" Spendenabsicht : hostet_fuer
+Spender "1" -- "0..*" Spendenabsicht : deklariert
+Spendenabsicht "1" --> "1" SteuerbeguenstigterZweck : widmet_fuer
+Spendenabsicht "1" o-- "1" Gegenleistungsverzichtserklaerung : enthaelt
+Spendenabsicht "0..1" --> "0..1" Geldspende : resultiert_in
 
 Spender "1" -- "0..*" Geldzuwendung : leistet
 Zuwendungsempfaenger "1" -- "0..*" Geldzuwendung : empfaengt

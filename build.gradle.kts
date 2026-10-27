@@ -1,9 +1,14 @@
 plugins {
     kotlin("jvm") version "2.1.0"
+    application
 }
 
 group = "de.ad26.team07"
 version = "1.0-SNAPSHOT"
+
+application {
+    mainClass.set("de.ad26.team07.MainKt")
+}
 
 repositories {
     mavenCentral()

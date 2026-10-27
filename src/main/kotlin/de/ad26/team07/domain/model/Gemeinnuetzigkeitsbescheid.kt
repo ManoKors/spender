@@ -1,4 +1,4 @@
-package de.ad26.team07.verein
+package de.ad26.team07.domain.model
 
 import java.time.LocalDate
 

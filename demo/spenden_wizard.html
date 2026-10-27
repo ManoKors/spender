@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AD26 White-Label Spenden-Wizard Demo</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <style>
+    :root {
+      --primary: #059669;
+      --primary-light: #ecfdf5;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 30px 20px; line-height: 1.5; }
+    .container { max-width: 800px; margin: 0 auto; }
+
+    /* Club Switcher Bar */
+    .mandant-switcher {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 18px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .mandant-switcher select {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-weight: 600;
+      background: #fff;
+    }
+
+    /* Main Card */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);
+    }
+
+    /* Header */
+    .wizard-header {
+      background: var(--primary);
+      color: #ffffff;
+      padding: 24px 30px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      transition: background 0.3s;
+    }
+    .wizard-logo {
+      width: 56px;
+      height: 56px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+    }
+    .wizard-title h1 { font-size: 1.4rem; font-weight: 700; }
+    .wizard-title p { font-size: 0.9rem; opacity: 0.9; margin-top: 2px; }
+
+    /* Steps */
+    .wizard-body { padding: 30px; }
+    .step-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .step-badge {
+      background: var(--primary);
+      color: #fff;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+    }
+
+    /* Amount Buttons */
+    .amount-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+    .amount-btn {
+      padding: 12px;
+      border: 2px solid var(--border);
+      background: #fff;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .amount-btn:hover, .amount-btn.active {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    /* Form Fields */
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+    .form-control {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.95rem;
+    }
+    .form-row { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 2fr; gap: 12px; }
+
+    /* Checkbox */
+    .checkbox-box {
+      background: var(--primary-light);
+      border: 1px solid var(--primary);
+      padding: 14px;
+      border-radius: 8px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin: 20px 0;
+    }
+    .checkbox-box input { margin-top: 4px; width: 18px; height: 18px; cursor: pointer; }
+    .checkbox-box label { font-size: 0.85rem; cursor: pointer; color: var(--text); }
+
+    /* Button */
+    .btn-submit {
+      width: 100%;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-submit:hover { opacity: 0.92; }
+
+    /* Result Box (GiroCode) */
+    .result-view {
+      display: none;
+      padding: 30px;
+      background: #fff;
+      border-top: 1px solid var(--border);
+      animation: fadeIn 0.4s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .qr-container {
+      display: flex;
+      gap: 28px;
+      align-items: center;
+      background: var(--bg);
+      padding: 24px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+    #qrcode {
+      background: #fff;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      min-width: 160px;
+      min-height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .qr-details { flex: 1; }
+    .qr-details h3 { font-size: 1.1rem; margin-bottom: 10px; color: var(--primary); }
+    .qr-data-row { font-size: 0.9rem; margin-bottom: 6px; }
+    .qr-data-row strong { color: var(--text-muted); display: inline-block; width: 140px; }
+    .ref-badge {
+      background: #fef08a;
+      color: #854d0e;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-weight: bold;
+    }
+
+    /* Backoffice Simulation */
+    .backoffice-box {
+      background: #f1f5f9;
+      border: 1px dashed #94a3b8;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 20px;
+    }
+    .backoffice-box h4 { font-size: 0.95rem; margin-bottom: 8px; }
+    .btn-secondary {
+      background: #334155;
+      color: #fff;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-secondary:hover { background: #1e293b; }
+    .audit-log {
+      margin-top: 12px;
+      padding: 10px;
+      background: #0f172a;
+      color: #38bdf8;
+      font-family: monospace;
+      font-size: 0.8rem;
+      border-radius: 6px;
+      display: none;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- White Label Mandanten-Auswahl -->
+  <div class="mandant-switcher">
+    <div>
+      <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">White-Label Mandant (URL-Slug):</span>
+      <select id="slugSelector" onchange="switchMandant()">
+        <option value="katzenschutz-muenster">/spenden/katzenschutz-muenster (Tierschutz e.V.)</option>
+        <option value="ad26-foerderverein">/spenden/ad26-foerderverein (Forschung & Bildung e.V.)</option>
+      </select>
+    </div>
+    <span style="font-size: 0.8rem; color: #16a34a; font-weight: 700;">● Mandant aktiv</span>
+  </div>
+
+  <div class="card">
+    <!-- Vereins-Header (gebrandet) -->
+    <div class="wizard-header" id="wizardHeader">
+      <div class="wizard-logo" id="clubLogo">🐾</div>
+      <div class="wizard-title">
+        <h1 id="clubTitle">Spenden für den Katzenschutz Münster</h1>
+        <p id="clubSubtitle">Gemeinnütziger Verein • Steuernummer: 12/345/67890 • Freistellungsbescheid aktiv</p>
+      </div>
+    </div>
+
+    <!-- Wizard Formular -->
+    <div class="wizard-body" id="wizardForm">
+      <!-- 1. Betrag & Zweck -->
+      <div class="step-title"><span class="step-badge">1</span> Spendenbetrag & Förderzweck</div>
+      <div class="amount-grid">
+        <button type="button" class="amount-btn" onclick="selectAmount(25, this)">25 €</button>
+        <button type="button" class="amount-btn active" onclick="selectAmount(50, this)">50 €</button>
+        <button type="button" class="amount-btn" onclick="selectAmount(100, this)">100 €</button>
+        <button type="button" class="amount-btn" onclick="selectAmount(250, this)">250 €</button>
+      </div>
+      <div class="form-group">
+        <label>Satzungszweck laut § 52 AO:</label>
+        <select class="form-control" id="purposeSelect"></select>
+      </div>
+
+      <!-- 2. Spenderdaten -->
+      <div class="step-title" style="margin-top: 24px;"><span class="step-badge">2</span> Ihre Daten (für die Spendenquittung)</div>
+      <div class="form-group">
+        <label>Vollständiger Name / Spender:</label>
+        <input type="text" class="form-control" id="donorName" value="Mano Korsanke">
+      </div>
+      <div class="form-row form-group">
+        <div>
+          <label>Straße & Hausnummer:</label>
+          <input type="text" class="form-control" id="donorStreet" value="Universitätsstraße 14">
+        </div>
+        <div>
+          <label>PLZ & Ort:</label>
+          <input type="text" class="form-control" id="donorCity" value="48149 Münster">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>E-Mail (für Zusendung der Quittung):</label>
+        <input type="email" class="form-control" id="donorEmail" value="spende@example.org">
+      </div>
+
+      <!-- 3. Gegenleistungsverzicht -->
+      <div class="checkbox-box">
+        <input type="checkbox" id="checkVerzicht" checked>
+        <label for="checkVerzicht">
+          <strong>Gegenleistungsverzichtserklärung (Steuerrechtliche Pflicht):</strong><br>
+          Ich bestätige hiermit ausdrücklich, dass es sich um eine uneigennützige Zuwendung handelt und ich für meine Spende keinerlei Gegenleistung erhalte oder erwarte.
+        </label>
+      </div>
+
+      <button type="button" class="btn-submit" onclick="submitPledge()">Spende ankündigen & GiroCode generieren →</button>
+    </div>
+
+    <!-- 4. Bestätigung & EPC-GiroCode Result -->
+    <div class="result-view" id="resultView">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <h2 style="color: var(--primary);">Vielen Dank für Ihre Spendenabsicht!</h2>
+        <p style="color: var(--text-muted);">Scannen Sie den QR-Code einfach mit Ihrer Banking-App (Sparkasse, DKB, ING, Volksbank etc.).</p>
+      </div>
+
+      <div class="qr-container">
+        <div id="qrcode"></div>
+        <div class="qr-details">
+          <h3>SEPA Überweisungsdaten (EPC-Standard)</h3>
+          <div class="qr-data-row"><strong>Empfänger:</strong> <span id="resReceiver"></span></div>
+          <div class="qr-data-row"><strong>IBAN:</strong> <span id="resIban" style="font-family: monospace;"></span></div>
+          <div class="qr-data-row"><strong>BIC:</strong> <span id="resBic" style="font-family: monospace;"></span></div>
+          <div class="qr-data-row"><strong>Betrag:</strong> <span id="resAmount" style="font-weight: bold; font-size: 1.05rem;"></span></div>
+          <div class="qr-data-row"><strong>Verwendungszweck:</strong> <span class="ref-badge" id="resRef"></span></div>
+        </div>
+      </div>
+
+      <!-- Backoffice Simulation -->
+      <div class="backoffice-box">
+        <h4>Simulation: Kassenwart-Backoffice</h4>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">
+          Sobald der Betrag auf dem Vereinskonto eingeht, prüft das System automatisch die Gemeinnützigkeit und erzeugt die Bestätigung.
+        </p>
+        <button class="btn-secondary" onclick="simulatePaymentReceipt()">Geldeingang verbuchen & Compliance prüfen</button>
+        <div class="audit-log" id="auditLog"></div>
+      </div>
+
+      <div style="text-align: center; margin-top: 20px;">
+        <button class="amount-btn" onclick="resetForm()">← Weitere Spende durchführen</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Sample Mandanten-Daten
+  const mandanten = {
+    "katzenschutz-muenster": {
+      name: "Katzenschutz Münster e. V.",
+      kontoinhaber: "Katzenschutz Münster e. V.",
+      iban: "DE21400600000123456789",
+      bic: "GENODED1MUE",
+      color: "#059669",
+      colorLight: "#ecfdf5",
+      logo: "🐾",
+      title: "Spenden für den Katzenschutz Münster",
+      subtitle: "Gemeinnütziger Verein • Steuernummer: 12/345/67890 • Freistellungsbescheid aktiv",
+      purposes: [
+        { code: "§ 52 Abs. 2 Nr. 14 AO", label: "Förderung des Tierschutzes (Tierarzt & Futter)" },
+        { code: "§ 52 Abs. 2 Nr. 14 AO - Kastration", label: "Sonderfonds: Kastrationskampagnen" }
+      ]
+    },
+    "ad26-foerderverein": {
+      name: "AD26 Förderverein für Wissenschaft e. V.",
+      kontoinhaber: "AD26 Foerderverein e. V.",
+      iban: "DE89370501980000012345",
+      bic: "COBADEFFXXX",
+      color: "#2563eb",
+      colorLight: "#eff6ff",
+      logo: "🎓",
+      title: "Förderung von Forschung & Lehre (AD26)",
+      subtitle: "Gemeinnütziger Verein • Steuernummer: 33/789/10111 • Feststellungsbescheid § 60a AO",
+      purposes: [
+        { code: "§ 52 Abs. 2 Nr. 1 AO", label: "Förderung von Wissenschaft und Forschung" },
+        { code: "§ 52 Abs. 2 Nr. 7 AO", label: "Förderung der Erziehung, Volks- und Berufsbildung" }
+      ]
+    }
+  };
+
+  let selectedAmount = 50;
+
+  function switchMandant() {
+    const slug = document.getElementById('slugSelector').value;
+    const m = mandanten[slug];
+
+    document.documentElement.style.setProperty('--primary', m.color);
+    document.documentElement.style.setProperty('--primary-light', m.colorLight);
+
+    document.getElementById('clubLogo').textContent = m.logo;
+    document.getElementById('clubTitle').textContent = m.title;
+    document.getElementById('clubSubtitle').textContent = m.subtitle;
+
+    const pSelect = document.getElementById('purposeSelect');
+    pSelect.innerHTML = '';
+    m.purposes.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.code;
+      opt.textContent = `${p.label} (${p.code})`;
+      pSelect.appendChild(opt);
+    });
+
+    resetForm();
+  }
+
+  function selectAmount(amt, btn) {
+    selectedAmount = amt;
+    document.querySelectorAll('.amount-grid .amount-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  function submitPledge() {
+    if (!document.getElementById('checkVerzicht').checked) {
+      alert("Fehler (OCL Invariante 7): Gegenleistungsfreiheit muss zwingend bestätigt werden!");
+      return;
+    }
+
+    const slug = document.getElementById('slugSelector').value;
+    const m = mandanten[slug];
+    const donor = document.getElementById('donorName').value.trim();
+    if (!donor) { alert("Bitte Spendername eingeben!"); return; }
+
+    const year = new Date().getFullYear();
+    const rand = Math.floor(1000 + Math.random() * 9000);
+    const refCode = `SP-${year}-${rand}`;
+
+    // EPC069-08 SEPA-QR Payload formatieren
+    const epcPayload = [
+      "BCD",
+      "002",
+      "1",
+      "SCT",
+      m.bic,
+      m.kontoinhaber,
+      m.iban,
+      `EUR${selectedAmount.toFixed(2)}`,
+      "",
+      "",
+      refCode
+    ].join("\n");
+
+    // UI aktualisieren
+    document.getElementById('resReceiver').textContent = m.kontoinhaber;
+    document.getElementById('resIban').textContent = m.iban;
+    document.getElementById('resBic').textContent = m.bic;
+    document.getElementById('resAmount').textContent = `${selectedAmount.toFixed(2)} €`;
+    document.getElementById('resRef').textContent = refCode;
+
+    // QR-Code generieren
+    const qrDiv = document.getElementById('qrcode');
+    qrDiv.innerHTML = '';
+    new QRCode(qrDiv, {
+      text: epcPayload,
+      width: 150,
+      height: 150,
+      correctLevel: QRCode.CorrectLevel.M
+    });
+
+    document.getElementById('wizardForm').style.display = 'none';
+    document.getElementById('resultView').style.display = 'block';
+  }
+
+  function simulatePaymentReceipt() {
+    const log = document.getElementById('auditLog');
+    log.style.display = 'block';
+    log.textContent = [
+      `[1] Bank-Kontoauszug eingelesen: Geldeingang ${selectedAmount.toFixed(2)} € mit Zweck '${document.getElementById('resRef').textContent}'`,
+      `[2] Status der Spendenabsicht aktualisiert: ANGEKUENDIGT -> EINGEGANGEN`,
+      `[3] Automatische Compliance-Prüfung gestartet:`,
+      `    ✓ Freistellungsbescheid des Vereins: GÜLTIG (Frist <= 5 Jahre § 63 Abs. 5 AO)`,
+      `    ✓ Gegenleistungsverzichtserklärung: LIEGT VOR`,
+      `    ✓ Satzungszweck: GESTECKT & BEFREIT`,
+      `    ✓ Betrag: ${selectedAmount.toFixed(2)} € (in Worten formatiert)`,
+      `[4] Zuwendungsbestätigung nach amtlichem BMF-Muster 034122 generiert & freigegeben! ✓`
+    ].join("\n");
+  }
+
+  function resetForm() {
+    document.getElementById('wizardForm').style.display = 'block';
+    document.getElementById('resultView').style.display = 'none';
+    document.getElementById('auditLog').style.display = 'none';
+  }
+
+  // Init
+  switchMandant();
+</script>
+
+</body>
+</html>

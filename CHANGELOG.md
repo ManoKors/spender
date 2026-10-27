@@ -9,6 +9,18 @@ und dieses Projekt hält sich an [Semantic Versioning](https://semver.org/lang/d
 
 ## [Unreleased]
 
+### Added
+- **Hexagonale Architektur (Ports & Adapters):**
+  - Aufteilung des Codes in `domain` (Kern), `application` (Ports & Use Cases) und `adapter` (Infrastruktur).
+  - Architektur- und Entwurfsentscheidungen ADR 04 und ADR 05.
+- **White-Label Spenden-Wizard & Spendenabsichten:**
+  - Value Objects `WhiteLabelKonfiguration`, `Spender`, `Adresse`, `SteuerbeguenstigterZweck`.
+  - Entität `Spendenabsicht` (Pledge) mit Status-Zyklus (`ANGEKUENDIGT`, `EINGEGANGEN`, `ABGELAUFEN`).
+  - Verbindliche Gegenleistungsverzichtserklärung im Wizard.
+  - Domain Service `GiroCodeGenerator` nach europäischem EPC069-08 Standard.
+  - Inbound-Use-Case `RegistriereSpendenabsichtUseCase` mit `SpendenabsichtService`.
+  - Use-Case-Spezifikation (Teil 3) in der Prozesstabelle.
+
 ### Geplant
 - Modellierung von `Geldzuwendung`, `Geldspende` und `Mitgliedsbeitrag`.
 - Prüfung der Aufwandsspende-Bedingung (`Gegenleistungsverzichtserklaerung`).
