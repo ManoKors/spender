@@ -333,6 +333,191 @@
       display: none;
       white-space: pre-wrap;
     }
+
+    /* Modal für Amtliche Zuwendungsbestätigung (Muster 034122) */
+    .modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 16px;
+      overflow-y: auto;
+    }
+    .modal-content {
+      background: #ffffff;
+      border-radius: 12px;
+      max-width: 860px;
+      width: 100%;
+      max-height: 94vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+      position: relative;
+    }
+    .modal-bar {
+      position: sticky;
+      top: 0;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+    .btn-print {
+      background: #059669;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 18px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+    .btn-print:hover { background: #047857; }
+    .btn-close {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+    .btn-close:hover { background: #f1f5f9; }
+
+    /* Formular-Layout nach BMF-Muster 034122 */
+    .document-page {
+      background: #fff;
+      padding: 24px 32px;
+      color: #111;
+      font-size: 10pt;
+      line-height: 1.4;
+    }
+    .doc-header-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 14px;
+    }
+    .doc-header-table td {
+      vertical-align: top;
+      width: 50%;
+    }
+    .doc-box {
+      border: 1px solid #333;
+      padding: 10px 12px;
+      min-height: 95px;
+      font-size: 9pt;
+      line-height: 1.35;
+    }
+    .doc-box-title {
+      font-size: 7.5pt;
+      font-weight: bold;
+      color: #555;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .doc-title-block {
+      text-align: center;
+      margin: 12px 0 10px 0;
+      border-top: 2px solid #000;
+      border-bottom: 2px solid #000;
+      padding: 6px 0;
+    }
+    .doc-title-main {
+      font-size: 11pt;
+      font-weight: bold;
+      letter-spacing: 0.3px;
+    }
+    .doc-title-sub {
+      font-size: 7.5pt;
+      margin-top: 3px;
+      color: #333;
+      line-height: 1.25;
+    }
+    .doc-data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0;
+      font-size: 9pt;
+    }
+    .doc-data-table th, .doc-data-table td {
+      border: 1px solid #444;
+      padding: 5px 8px;
+      vertical-align: middle;
+    }
+    .doc-data-table th {
+      background: #f8fafc;
+      text-align: left;
+      font-size: 8.5pt;
+      width: 32%;
+    }
+    .doc-amount-words {
+      font-style: italic;
+      font-weight: bold;
+    }
+    .doc-legal-text {
+      font-size: 8pt;
+      line-height: 1.35;
+      text-align: justify;
+      margin: 10px 0;
+    }
+    .doc-confirmation {
+      border: 1px solid #444;
+      padding: 8px 10px;
+      margin: 8px 0;
+      background: #fcfcfc;
+      font-size: 8.5pt;
+      line-height: 1.35;
+    }
+    .doc-signature-grid {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+      font-size: 8.5pt;
+    }
+    .doc-signature-box {
+      width: 46%;
+      border-top: 1px solid #000;
+      padding-top: 5px;
+      text-align: center;
+    }
+    .doc-footer-note {
+      font-size: 7pt;
+      line-height: 1.3;
+      color: #666;
+      border-top: 1px solid #ccc;
+      padding-top: 6px;
+      margin-top: 16px;
+    }
+
+    @media print {
+      body * { visibility: hidden; }
+      #receiptModal, #receiptModal * { visibility: visible; }
+      #receiptModal {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: auto;
+        background: transparent;
+        padding: 0;
+        display: block !important;
+      }
+      .modal-content {
+        max-width: 100%;
+        max-height: none;
+        box-shadow: none;
+        border-radius: 0;
+      }
+      .modal-bar { display: none !important; }
+      .document-page { padding: 0; width: 100%; }
+    }
   </style>
 </head>
 <body>
@@ -469,6 +654,12 @@
         </p>
         <button type="button" class="btn-secondary" onclick="simulatePaymentReceipt()">Geldeingang verbuchen & Compliance prüfen</button>
         <div class="audit-log" id="auditLog"></div>
+
+        <div id="receiptActionBox" style="display:none; margin-top: 14px;">
+          <button type="button" class="btn" style="background: #2563eb; width: 100%; font-size: 0.95rem; padding: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 6px -1px rgba(37,99,235,0.25);" onclick="openReceiptModal()">
+            📄 Amtliche Zuwendungsbestätigung (Muster 034122) anzeigen & drucken
+          </button>
+        </div>
       </div>
 
       <div style="text-align: center; margin-top: 24px;">
@@ -479,12 +670,38 @@
 
 </div>
 
+<!-- Modal für Amtliche Zuwendungsbestätigung nach BMF-Muster 034122 -->
+<div id="receiptModal" class="modal-backdrop">
+  <div class="modal-content">
+    <div class="modal-bar">
+      <div>
+        <strong style="color: #1e293b;">Amtliche Zuwendungsbestätigung</strong>
+        <span style="font-size: 0.8rem; color: #64748b; margin-left: 8px;">BMF Muster 034122 (Fassung 2013)</span>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button type="button" class="btn-print" onclick="window.print()">🖨️ Drucken / PDF</button>
+        <button type="button" class="btn-close" onclick="closeReceiptModal()">✕ Schließen</button>
+      </div>
+    </div>
+    <div class="document-page" id="printableReceipt">
+      <!-- Dynamisch gefüllt durch openReceiptModal() -->
+    </div>
+  </div>
+</div>
+
 <script>
-  // Sample Mandanten-Daten
+  // Sample Mandanten-Daten mit vollständigen Steuerstammdaten
   const mandanten = {
     "katzenschutz-muenster": {
       name: "Katzenschutz Münster e. V.",
       kontoinhaber: "Katzenschutz Münster e. V.",
+      street: "Katzenweg 1",
+      city: "48149 Münster",
+      taxOffice: "Finanzamt Münster-Außenstadt",
+      taxId: "12/345/67890",
+      noticeType: "Freistellungsbescheid",
+      noticeDate: "15.03.2024",
+      assessmentPeriod: "2021 bis 2023",
       iban: "DE21400600000123456789",
       bic: "GENODED1MUE",
       color: "#059669",
@@ -500,6 +717,13 @@
     "ad26-foerderverein": {
       name: "AD26 Förderverein für Wissenschaft e. V.",
       kontoinhaber: "AD26 Foerderverein e. V.",
+      street: "Campusallee 7",
+      city: "48149 Münster",
+      taxOffice: "Finanzamt Münster-Innenstadt",
+      taxId: "33/789/10111",
+      noticeType: "Feststellungsbescheid nach § 60a Abs. 1 AO",
+      noticeDate: "10.01.2025",
+      assessmentPeriod: "2024",
       iban: "DE89370501980000012345",
       bic: "COBADEFFXXX",
       color: "#2563eb",
@@ -516,6 +740,7 @@
 
   let selectedAmount = 50;
   let currentEpcPayload = "";
+  let lastPledge = null;
 
   function switchMandant() {
     const slug = document.getElementById('slugSelector').value;
@@ -554,6 +779,48 @@
     document.getElementById('checkVerzicht').checked = true;
   }
 
+  function zahlInWorten(num) {
+    const n = Math.floor(num);
+    if (n === 0) return "null Euro";
+    const ones = ["", "ein", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun", "zehn", "elf", "zwölf", "dreizehn", "vierzehn", "fünfzehn", "sechzehn", "siebzehn", "achtzehn", "neunzehn"];
+    const tens = ["", "", "zwanzig", "dreißig", "vierzig", "fünfzig", "sechzig", "siebzig", "achtzig", "neunzig"];
+
+    function convert99(val) {
+      if (val < 20) {
+        if (val === 1) return "eins";
+        return ones[val];
+      }
+      const o = val % 10;
+      const t = Math.floor(val / 10);
+      if (o === 0) return tens[t];
+      return ones[o] + "und" + tens[t];
+    }
+
+    function convert999(val) {
+      let res = "";
+      const h = Math.floor(val / 100);
+      const rem = val % 100;
+      if (h > 0) {
+        res += (h === 1 ? "einhundert" : ones[h] + "hundert");
+      }
+      if (rem > 0) {
+        res += convert99(rem);
+      }
+      return res;
+    }
+
+    let text = "";
+    if (n >= 1000) {
+      const k = Math.floor(n / 1000);
+      const remK = n % 1000;
+      text += (k === 1 ? "eintausend" : convert999(k) + "tausend");
+      if (remK > 0) text += convert999(remK);
+    } else {
+      text = convert999(n);
+    }
+    return text + " Euro";
+  }
+
   function submitPledge() {
     if (!document.getElementById('checkVerzicht').checked) {
       alert("Fehler (OCL Invariante 7): Gegenleistungsfreiheit muss zwingend bestätigt werden!");
@@ -568,6 +835,23 @@
     const year = new Date().getFullYear();
     const rand = Math.floor(1000 + Math.random() * 9000);
     const refCode = `SP-${year}-${rand}`;
+    const receiptNo = `ZB-${year}-${rand}`;
+
+    const now = new Date();
+    const todayStr = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
+
+    lastPledge = {
+      mandant: m,
+      amount: selectedAmount,
+      donorName: donor,
+      donorStreet: document.getElementById('donorStreet').value.trim() || "Universitätsstraße 14",
+      donorCity: document.getElementById('donorCity').value.trim() || "48149 Münster",
+      donorEmail: document.getElementById('donorEmail').value.trim(),
+      purpose: document.getElementById('purposeSelect').value,
+      refCode: refCode,
+      receiptNo: receiptNo,
+      date: todayStr
+    };
 
     // EPC069-08 SEPA-QR Payload formatieren
     currentEpcPayload = [
@@ -601,7 +885,6 @@
         const qr = VanillaQR.create(currentEpcPayload);
         qrDiv.innerHTML = qr.toSVG(4);
       } else {
-        // SVG Vector Fallback wenn kein Script geladen
         qrDiv.innerHTML = renderFallbackGiroBadge(refCode, selectedAmount);
       }
     } catch (e) {
@@ -645,7 +928,6 @@
         btn.style.color = "";
       }, 1500);
     }).catch(() => {
-      // Fallback
       prompt("Kopieren:", text);
     });
   }
@@ -660,9 +942,107 @@
       `    ✓ Freistellungsbescheid des Vereins: GÜLTIG (Frist <= 5 Jahre § 63 Abs. 5 AO)`,
       `    ✓ Gegenleistungsverzichtserklärung: LIEGT VOR (uneigennützige Zuwendung)`,
       `    ✓ Satzungszweck: GESTECKT & BEFREIT (lt. Satzung hinterlegt)`,
-      `    ✓ Betrag: ${selectedAmount.toFixed(2)} € (in Worten formatiert)`,
-      `[4] Zuwendungsbestätigung nach amtlichem BMF-Muster 034122 generiert & freigegeben! ✓`
+      `    ✓ Betrag: ${selectedAmount.toFixed(2)} € (in Worten: "${zahlInWorten(selectedAmount)}")`,
+      `[4] Zuwendungsbestätigung nach amtlichem BMF-Muster 034122 generiert & freigegeben! ✓`,
+      `    Dokument: Bestätigungsnummer ${lastPledge ? lastPledge.receiptNo : 'ZB-2026-XXXX'}`
     ].join("\n");
+
+    document.getElementById('receiptActionBox').style.display = 'block';
+  }
+
+  function openReceiptModal() {
+    if (!lastPledge) return;
+    const p = lastPledge;
+    const m = p.mandant;
+    const amountWords = zahlInWorten(p.amount);
+
+    const html = `
+      <table class="doc-header-table">
+        <tr>
+          <td style="padding-right: 12px;">
+            <div class="doc-box">
+              <div class="doc-box-title">Aussteller (Bezeichnung und Anschrift der steuerbegünstigten Einrichtung)</div>
+              <strong>${m.name}</strong><br>
+              ${m.street}<br>
+              ${m.city}
+            </div>
+          </td>
+          <td style="padding-left: 12px;">
+            <div class="doc-box">
+              <div class="doc-box-title">Bestätigungs-Nr. & Steuerdaten</div>
+              <strong>Bestätigungs-Nr.:</strong> ${p.receiptNo}<br>
+              <strong>Finanzamt:</strong> ${m.taxOffice}<br>
+              <strong>Steuernummer:</strong> ${m.taxId}
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <div class="doc-title-block">
+        <div class="doc-title-main">BESTÄTIGUNG ÜBER GELDZUWENDUNGEN / MITGLIEDSBEITRAG</div>
+        <div class="doc-title-sub">im Sinne des § 10b des Einkommensteuergesetzes an eine der in § 5 Abs. 1 Nr. 9 des Körperschaftsteuergesetzes bezeichneten Körperschaften, Personenvereinigungen oder Vermögensmassen<br>(Amtliches BMF-Muster 034122)</div>
+      </div>
+
+      <div class="doc-box" style="margin-bottom: 12px; min-height: 55px;">
+        <div class="doc-box-title">Name und Anschrift des Zuwendenden:</div>
+        <strong>${p.donorName}</strong><br>
+        ${p.donorStreet}, ${p.donorCity}
+      </div>
+
+      <table class="doc-data-table">
+        <tr>
+          <th>Betrag der Zuwendung in Ziffern:</th>
+          <td style="font-size: 11pt; font-weight: bold; color: #111;">${p.amount.toFixed(2)} EUR</td>
+        </tr>
+        <tr>
+          <th>Betrag der Zuwendung in Worten:</th>
+          <td class="doc-amount-words">${amountWords}</td>
+        </tr>
+        <tr>
+          <th>Tag der Zuwendung (Eingang):</th>
+          <td>${p.date}</td>
+        </tr>
+      </table>
+
+      <div style="font-size: 8.5pt; margin: 8px 0; border: 1px solid #ddd; padding: 6px 10px; background: #fafafa;">
+        <strong>Es handelt sich um den Verzicht auf Erstattung von Aufwendungen:</strong>
+        <span style="margin-left: 20px;">[ &nbsp; ] Ja &nbsp;&nbsp;&nbsp;&nbsp; <strong>[ X ] Nein</strong></span>
+      </div>
+
+      <div class="doc-legal-text">
+        Wir sind wegen <strong>Förderung der ${p.purpose}</strong> nach dem letzten uns zugegangenen
+        <strong>${m.noticeType}</strong> bzw. nach der Anlage zum Körperschaftsteuerbescheid des
+        <strong>${m.taxOffice}</strong>, StNr. <strong>${m.taxId}</strong>, vom <strong>${m.noticeDate}</strong>
+        nach § 5 Abs. 1 Nr. 9 des Körperschaftsteuergesetzes von der Körperschaftsteuer und nach § 3 Nr. 6 des Gewerbesteuergesetzes von der Gewerbesteuer befreit.
+        Der letzte Veranlagungszeitraum umfasst die Jahre <strong>${m.assessmentPeriod}</strong>.
+      </div>
+
+      <div class="doc-confirmation">
+        <strong>Bestätigung:</strong> Es wird bestätigt, dass die Zuwendung nur zur Förderung der steuerbegünstigten Zwecke verwendet wird.
+      </div>
+
+      <div class="doc-signature-grid">
+        <div class="doc-signature-box">
+          ${m.city}, den ${p.date}<br>
+          <span style="font-size: 7.5pt; color: #666;">(Ort, Datum)</span>
+        </div>
+        <div class="doc-signature-box">
+          ${m.name}<br>
+          <span style="font-size: 7.5pt; color: #666;">(Unterschrift des Zuwendungsempfängers / Vorstand)</span>
+        </div>
+      </div>
+
+      <div class="doc-footer-note">
+        <strong>Hinweis:</strong> Wer vorsätzlich oder grob fahrlässig eine unrichtige Zuwendungsbestätigung erstellt oder wer veranlasst, dass Zuwendungen nicht zu den in der Bestätigung angegebenen steuerbegünstigten Zwecken verwendet werden, haftet für die Steuer, die dem Fiskus durch einen etwaigen unberechtigten Spendenabzug entgeht (§ 10b Abs. 4 EStG). Diese Bestätigung wird nicht als Nachweis für die steuerliche Berücksichtigung der Zuwendung anerkannt, wenn das Datum des Freistellungsbescheides länger als 5 Jahre bzw. das Datum der Feststellung der Einhaltung der satzungsmäßigen Voraussetzungen nach § 60a Abs. 1 AO länger als 3 Jahre seit Ausstellung der Bestätigung zurückliegt (§ 63 Abs. 5 AO).
+      </div>
+    `;
+
+    document.getElementById('printableReceipt').innerHTML = html;
+    document.getElementById('receiptModal').classList.add('active');
+  }
+
+  function closeReceiptModal() {
+    document.getElementById('receiptModal').classList.remove('active');
   }
 
   function resetForm() {
@@ -670,7 +1050,14 @@
     document.getElementById('resultView').style.display = 'none';
     document.getElementById('auditLog').style.display = 'none';
     document.getElementById('epcRawBox').style.display = 'none';
+    document.getElementById('receiptActionBox').style.display = 'none';
+    closeReceiptModal();
   }
+
+  // Modal Schließen bei ESC Taste
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeReceiptModal();
+  });
 
   // Init
   switchMandant();

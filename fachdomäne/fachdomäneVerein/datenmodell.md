@@ -239,6 +239,7 @@ namespace PrimaryAdapters_Driving {
   class SpendenWizardWebAdapter["Web-Spenden-Wizard (HTML/JS)"] {
     +zeigeWizard(slug: String)
     +uebermittlePledge(formData)
+    +zeigeZuwendungsbestaetigung(bestaetigungsNummer: String)
   }
   class MainCliDemo["MainKt (CLI Demo Runner)"] {
     +main()
@@ -259,6 +260,16 @@ namespace InboundPorts_Driving {
     +spenderEmail: String?
     +gegenleistungsverzichtBestaetigt: Boolean
   }
+  class StelleZuwendungsbestaetigungAusUseCase {
+    <<interface>>
+    +ausstellen(command: StelleZuwendungsbestaetigungAusCommand) Zuwendungsbestaetigung
+  }
+  class StelleZuwendungsbestaetigungAusCommand {
+    +referenzCode: String
+    +ausstellungsOrt: String
+    +ausstellungsDatum: LocalDate
+    +unterschrift: String
+  }
 }
 
 namespace ApplicationServices {
@@ -267,6 +278,11 @@ namespace ApplicationServices {
     -SpendenabsichtRepositoryPort spendenabsichtRepository
     +registriere(command: RegistriereSpendenabsichtCommand) Spendenabsicht
     -generiereReferenzCode() String
+  }
+  class ZuwendungsbestaetigungService {
+    -SpendenabsichtRepositoryPort spendenabsichtRepository
+    -ZuwendungsbestaetigungDokumentPort dokumentPort
+    +ausstellen(command: StelleZuwendungsbestaetigungAusCommand) Zuwendungsbestaetigung
   }
 }
 
@@ -281,6 +297,10 @@ namespace OutboundPorts_Driven {
     +speichere(spendenabsicht: Spendenabsicht)
     +findeNachReferenzCode(referenzCode: String) Spendenabsicht?
     +findeAlleFuerVerein(vereinSlug: String) List~Spendenabsicht~
+  }
+  class ZuwendungsbestaetigungDokumentPort {
+    <<interface>>
+    +generiereDokument(bestaetigung: Zuwendungsbestaetigung) String
   }
 }
 
@@ -300,32 +320,49 @@ namespace SecondaryAdapters_Driven {
     +create(payload: String)
     +toSVG(pixelSize: Int) String
   }
+  class Muster034122HtmlAdapter["Muster034122HtmlAdapter (Print/PDF)"] {
+    +generiereDokument(bestaetigung: Zuwendungsbestaetigung) String
+  }
 }
 
 namespace DomainCore {
   class Spendenabsicht["Spendenabsicht (Entity)"]
   class Zuwendungsempfaenger["Zuwendungsempfaenger (Entity)"]
+  class Geldspende["Geldspende (Entity)"]
+  class Zuwendungsbestaetigung["Zuwendungsbestaetigung (Entity)"]
   class GiroCodeGenerator["GiroCodeGenerator (Domain Service)"]
+  class ZahlenInWortenKonverter["ZahlenInWortenKonverter (Domain Service)"]
 }
 
 %% Driving Adapter rufen Driving Ports auf
 SpendenWizardWebAdapter ..> RegistriereSpendenabsichtUseCase : ruft_auf
+SpendenWizardWebAdapter ..> StelleZuwendungsbestaetigungAusUseCase : ruft_auf
 MainCliDemo ..> RegistriereSpendenabsichtUseCase : ruft_auf
+MainCliDemo ..> StelleZuwendungsbestaetigungAusUseCase : ruft_auf
 RegistriereSpendenabsichtUseCase ..> RegistriereSpendenabsichtCommand : verarbeitet
+StelleZuwendungsbestaetigungAusUseCase ..> StelleZuwendungsbestaetigungAusCommand : verarbeitet
 
-%% Application Service implementiert Inbound Port
+%% Application Services implementieren Inbound Ports
 SpendenabsichtService ..|> RegistriereSpendenabsichtUseCase : implements
+ZuwendungsbestaetigungService ..|> StelleZuwendungsbestaetigungAusUseCase : implements
 
-%% Application Service nutzt Outbound Ports und Domain
+%% Application Services nutzen Outbound Ports und Domain
 SpendenabsichtService --> VereinRepositoryPort : vereinRepository
 SpendenabsichtService --> SpendenabsichtRepositoryPort : spendenabsichtRepository
 SpendenabsichtService ..> Spendenabsicht : erzeugt_und_orchestriert
 SpendenabsichtService ..> Zuwendungsempfaenger : liest_verein
 Spendenabsicht ..> GiroCodeGenerator : erzeugtPayloadMit
 
+ZuwendungsbestaetigungService --> SpendenabsichtRepositoryPort : spendenabsichtRepository
+ZuwendungsbestaetigungService --> ZuwendungsbestaetigungDokumentPort : dokumentPort
+ZuwendungsbestaetigungService ..> Zuwendungsbestaetigung : erzeugt_und_validiert
+ZuwendungsbestaetigungService ..> Geldspende : erstellt
+Zuwendungsbestaetigung ..> ZahlenInWortenKonverter : konvertiertBetrag
+
 %% Secondary Adapter implementieren Outbound Ports
 InMemoryVereinRepository ..|> VereinRepositoryPort : implements
 InMemorySpendenabsichtRepository ..|> SpendenabsichtRepositoryPort : implements
+Muster034122HtmlAdapter ..|> ZuwendungsbestaetigungDokumentPort : implements
 SpendenWizardWebAdapter ..> VanillaQREngine : rendertSVG
 ```
 

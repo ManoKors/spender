@@ -101,16 +101,41 @@ fun main() {
     // 5. Simulation Geldeingang & Compliance-Prüfung
     println("\n--- SCHRITT 3: Geldeingang auf Vereinskonto & Belegprüfung ---")
     println("  Kassenwart sieht Überweisung mit Betrag ${absicht.betrag} EUR und Referenz '${absicht.referenzCode}'.")
-    val realisiert = absicht.markiereAlsEingegangen()
-    println("  Status geändert: ${absicht.status} -> ${realisiert.status}")
 
-    val bescheid = vereinTierschutz.gemeinnuetzigkeitsbescheide.first()
-    val istGueltig = bescheid.istGueltigAm(LocalDate.now())
-    println("  Steuerliche Bescheidprüfung:")
-    println("  - Freistellungsbescheid vom: ${bescheid.bescheidDatum}")
-    println("  - Heute (${LocalDate.now()}) noch gültig (max. 5 Jahre § 63 Abs. 5 AO)? -> ${if (istGueltig) "JA (Erfolgreich)" else "NEIN (Abgelaufen)"}")
+    val htmlAdapter = de.ad26.team07.adapter.out.Muster034122HtmlAdapter()
+    val bestaetigungService = de.ad26.team07.application.service.ZuwendungsbestaetigungService(
+        spendenabsichtRepository = spendenabsichtRepo,
+        dokumentPort = htmlAdapter
+    )
 
+    // 6. Amtliche Zuwendungsbestätigung ausstellen (UC-4)
+    println("\n--- SCHRITT 4: Amtliche Zuwendungsbestätigung ausstellen (UC-4 / Muster 034122) ---")
+    val ausstellCommand = de.ad26.team07.application.port.`in`.StelleZuwendungsbestaetigungAusCommand(
+        referenzCode = absicht.referenzCode,
+        ausstellungsOrt = "Münster",
+        ausstellungsDatum = LocalDate.now(),
+        unterschrift = "Mano Korsanke (Kassenwart)"
+    )
+
+    val bestaetigung = bestaetigungService.ausstellen(ausstellCommand)
+    val htmlFormular = htmlAdapter.generiereDokument(bestaetigung)
+
+    // Speichern als druckfertige HTML-Datei im build-Verzeichnis
+    val outputDir = java.io.File("build")
+    if (!outputDir.exists()) outputDir.mkdirs()
+    val outputFile = java.io.File(outputDir, "zuwendungsbestaetigung_${bestaetigung.bestaetigungsNummer}.html")
+    outputFile.writeText(htmlFormular)
+
+    println("✓ Bestätigung formell erteilt: '${bestaetigung.bestaetigungsNummer}'")
+    println("  - Aussteller: ${bestaetigung.geldzuwendung.empfaenger.name} (StNr: ${bestaetigung.gemeinnuetzigkeitsbescheid.steuernummer})")
+    println("  - Zuwendender: ${bestaetigung.geldzuwendung.zuwendender.name}")
+    println("  - Betrag in Ziffern: ${bestaetigung.geldzuwendung.betrag} EUR")
+    println("  - Betrag in Worten: >>> ${bestaetigung.betragInWorten} <<<")
+    println("  - Steuerbegünstigter Zweck: ${bestaetigung.gefoerderterZweck.bezeichnung} (${bestaetigung.gefoerderterZweck.paragraf})")
+    println("  - Rechtsgrundlage: Freistellungsbescheid vom ${bestaetigung.gemeinnuetzigkeitsbescheid.bescheidDatum} (Finanzamt ${bestaetigung.gemeinnuetzigkeitsbescheid.finanzamt})")
+    println("  - Vereinfachter Nachweis (<= 300 €): ${if (bestaetigung.vereinfachterNachweisMoeglich) "Ja (Kontoauszug genügt, Quittung dennoch erstellt)" else "Nein"}")
     println("\n================================================================================")
-    println("  Ergebnis: Zuwendungsbestätigung nach Muster 034122 darf ausgestellt werden!   ")
+    println("  Gesetzlich rechtssicheres Formular nach Muster 034122 generiert:")
+    println("  📁 Datei: ${outputFile.absolutePath}")
     println("================================================================================\n")
 }

@@ -10,6 +10,26 @@ und dieses Projekt hält sich an [Semantic Versioning](https://semver.org/lang/d
 ## [Unreleased]
 
 ### Added
+- **Amtliche Zuwendungsbestätigung nach BMF-Muster 034122 (UC-4):**
+  - **Rechtssichere Formularausstellung (Fassung 2013):** Vollständige Umsetzung der gesetzlichen Vorgaben nach § 10b EStG i. V. m. § 5 Abs. 1 Nr. 9 KStG und § 63 Abs. 5 AO ohne unzulässige Danksagungen oder Werbebotschaften.
+  - **Domain-Modell & OCL-Prüfungen:**
+    - Entität [`Zuwendungsbestaetigung`](src/main/kotlin/de/ad26/team07/domain/model/Zuwendungsbestaetigung.kt) und Hierarchie [`Geldzuwendung`](src/main/kotlin/de/ad26/team07/domain/model/Geldzuwendung.kt) mit Spezialisierungen `Geldspende` und `Mitgliedsbeitrag`.
+    - Durchsetzung aller steuerrechtlichen Invarianten: OCL 3 (Gültigkeit des Gemeinnützigkeitsbescheids), OCL 4 (Zweckübereinstimmung mit Satzung), OCL 5 & OCL 8 (Verzichtserklärung bei Aufwandsspenden) und OCL 6 (Betrag in Ziffern und Worten).
+    - Prüfung der Nachweiserleichterung nach § 50 Abs. 4 Nr. 2 EStDV (Kleinbetragsspenden bis 300 Euro).
+  - **Domain Service [`ZahlenInWortenKonverter`](src/main/kotlin/de/ad26/team07/domain/service/ZahlenInWortenKonverter.kt):**
+    - Steuerkonforme Umwandlung numerischer Eurobeträge in normgerechte deutsche Zahlwörter (z. B. 75,00 EUR -> "fünfundsiebzig Euro").
+  - **Hexagonale Architektur (Ports & Adapters):**
+    - Inbound Port [`StelleZuwendungsbestaetigungAusUseCase`](src/main/kotlin/de/ad26/team07/application/port/in/StelleZuwendungsbestaetigungAusUseCase.kt) und [`StelleZuwendungsbestaetigungAusCommand`](src/main/kotlin/de/ad26/team07/application/port/in/StelleZuwendungsbestaetigungAusCommand.kt).
+    - Application Service [`ZuwendungsbestaetigungService`](src/main/kotlin/de/ad26/team07/application/service/ZuwendungsbestaetigungService.kt) orchestriert Zuordnung, Validierung und Bestätigungsausstellung.
+    - Outbound Port [`ZuwendungsbestaetigungDokumentPort`](src/main/kotlin/de/ad26/team07/application/port/out/ZuwendungsbestaetigungDokumentPort.kt) entkoppelt Kernlogik von Rendering-Engines.
+  - **Secondary Outbound Adapter [`Muster034122HtmlAdapter`](src/main/kotlin/de/ad26/team07/adapter/out/Muster034122HtmlAdapter.kt):**
+    - Generiert exakt auf 1 DIN-A4-Seite optimierte, druckfertige HTML/CSS-Dokumente mit amtlichen Pflichttexten, Aussteller-/Empfängerfeldern, Steuervermerk, Bestätigungssatz und Haftungshinweis gemäß § 10b Abs. 4 EStG.
+  - **CLI-Demo & Artefakt-Ausgabe:**
+    - [`Main.kt`](src/main/kotlin/de/ad26/team07/Main.kt) führt die vollständige End-to-End-Pipeline aus und speichert das amtliche Dokument automatisch im Projektordner (`build/zuwendungsbestaetigung_ZB-YYYY-NNNN.html`).
+  - **Interaktiver Web-Wizard & Druckvorschau:**
+    - [`demo/spenden_wizard.html`](demo/spenden_wizard.html) bietet nach Klick auf *Geldeingang verbuchen* eine Live-Vorschau und Druckfunktion (PDF-Export per Browser-Druckdialog) des amtlichen BMF-Musters 034122.
+- **Automatisierte Testsuite (30 Tests, 100% bestanden):**
+  - Vollständige Abdeckung aller Bescheidfristen (§ 63 Abs. 5 AO, § 60a AO), Spendenabsichts-Invarianten, GiroCode-Integrität, ZahlenInWorten-Konvertierung, OCL-Regeln der Zuwendungsbestätigung sowie End-to-End-HTML-Generierung.
 - **Hexagonale Architektur (Ports & Adapters):**
   - Aufteilung des Codes in `domain` (Kern), `application` (Ports & Use Cases) und `adapter` (Infrastruktur).
   - Outbound-Ports [`VereinRepositoryPort`](src/main/kotlin/de/ad26/team07/application/port/out/VereinRepositoryPort.kt) und [`SpendenabsichtRepositoryPort`](src/main/kotlin/de/ad26/team07/application/port/out/SpendenabsichtRepositoryPort.kt) für lose Persistenz- und Schnittstellenkopplung.
@@ -34,8 +54,6 @@ und dieses Projekt hält sich an [Semantic Versioning](https://semver.org/lang/d
   - Vektor-SVG-Rendering ohne externe CDN-Abhängigkeiten (100% offline- und `file:///`-fähig).
   - Volle UTF-8-Unterstützung für deutsche Sonderzeichen und Umlaute in Verwendungszwecken und Vereinsnamen.
   - Interaktive Komfort-Funktionen in [`demo/spenden_wizard.html`](demo/spenden_wizard.html): One-Click-Copy für SEPA-Felder, Rohdaten-Payload-Inspektion und Auto-Fill für Testdaten.
-- **Automatisierte Testsuite (19 Tests):**
-  - Vollständige Abdeckung aller Bescheidfristen (§ 63 Abs. 5 AO, § 60a AO), Spendenabsichts-Invarianten, GiroCode-Integrität und Inbound Use Cases.
 
 ### Changed
 - **UML 2.5 Use-Case-Modell & Systemgrenzen-Harmonisierung:**

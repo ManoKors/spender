@@ -413,6 +413,7 @@ namespace PrimaryAdapters_Driving {
   class SpendenWizardWebAdapter["Web-Spenden-Wizard (HTML/JS)"] {
     +zeigeWizard(slug)
     +uebermittlePledge(formData)
+    +zeigeZuwendungsbestaetigung(bestaetigungsNummer)
   }
   class MainCliDemo["MainKt (CLI Demo Runner)"] {
     +main()
@@ -433,6 +434,16 @@ namespace InboundPorts_Driving {
     +String spenderEmail
     +Boolean gegenleistungsverzichtBestaetigt
   }
+  class StelleZuwendungsbestaetigungAusUseCase {
+    &lt;&lt;interface&gt;&gt;
+    +ausstellen(command) Zuwendungsbestaetigung
+  }
+  class StelleZuwendungsbestaetigungAusCommand {
+    +String referenzCode
+    +String ausstellungsOrt
+    +Date ausstellungsDatum
+    +String unterschrift
+  }
 }
 
 namespace ApplicationServices {
@@ -441,6 +452,11 @@ namespace ApplicationServices {
     -SpendenabsichtRepositoryPort spendenabsichtRepository
     +registriere(command) Spendenabsicht
     -generiereReferenzCode() String
+  }
+  class ZuwendungsbestaetigungService {
+    -SpendenabsichtRepositoryPort spendenabsichtRepository
+    -ZuwendungsbestaetigungDokumentPort dokumentPort
+    +ausstellen(command) Zuwendungsbestaetigung
   }
 }
 
@@ -455,6 +471,10 @@ namespace OutboundPorts_Driven {
     +speichere(spendenabsicht)
     +findeNachReferenzCode(referenzCode) Spendenabsicht
     +findeAlleFuerVerein(vereinSlug) List
+  }
+  class ZuwendungsbestaetigungDokumentPort {
+    &lt;&lt;interface&gt;&gt;
+    +generiereDokument(bestaetigung) String
   }
 }
 
@@ -474,19 +494,29 @@ namespace SecondaryAdapters_Driven {
     +create(payload)
     +toSVG(pixelSize) String
   }
+  class Muster034122HtmlAdapter["Muster034122HtmlAdapter (Print/PDF)"] {
+    +generiereDokument(bestaetigung) String
+  }
 }
 
 namespace DomainCore {
   class Spendenabsicht["Spendenabsicht (Entity)"]
   class Zuwendungsempfaenger["Zuwendungsempfaenger (Entity)"]
+  class Geldspende["Geldspende (Entity)"]
+  class Zuwendungsbestaetigung["Zuwendungsbestaetigung (Entity)"]
   class GiroCodeGenerator["GiroCodeGenerator (Domain Service)"]
+  class ZahlenInWortenKonverter["ZahlenInWortenKonverter (Domain Service)"]
 }
 
 SpendenWizardWebAdapter ..> RegistriereSpendenabsichtUseCase : ruft_auf
+SpendenWizardWebAdapter ..> StelleZuwendungsbestaetigungAusUseCase : ruft_auf
 MainCliDemo ..> RegistriereSpendenabsichtUseCase : ruft_auf
+MainCliDemo ..> StelleZuwendungsbestaetigungAusUseCase : ruft_auf
 RegistriereSpendenabsichtUseCase ..> RegistriereSpendenabsichtCommand : verarbeitet
+StelleZuwendungsbestaetigungAusUseCase ..> StelleZuwendungsbestaetigungAusCommand : verarbeitet
 
 SpendenabsichtService ..|> RegistriereSpendenabsichtUseCase : implements
+ZuwendungsbestaetigungService ..|> StelleZuwendungsbestaetigungAusUseCase : implements
 
 SpendenabsichtService --> VereinRepositoryPort : vereinRepository
 SpendenabsichtService --> SpendenabsichtRepositoryPort : spendenabsichtRepository
@@ -494,8 +524,15 @@ SpendenabsichtService ..> Spendenabsicht : erzeugt_und_orchestriert
 SpendenabsichtService ..> Zuwendungsempfaenger : liest_verein
 Spendenabsicht ..> GiroCodeGenerator : erzeugtPayloadMit
 
+ZuwendungsbestaetigungService --> SpendenabsichtRepositoryPort : spendenabsichtRepository
+ZuwendungsbestaetigungService --> ZuwendungsbestaetigungDokumentPort : dokumentPort
+ZuwendungsbestaetigungService ..> Zuwendungsbestaetigung : erzeugt_und_validiert
+ZuwendungsbestaetigungService ..> Geldspende : erstellt
+Zuwendungsbestaetigung ..> ZahlenInWortenKonverter : konvertiertBetrag
+
 InMemoryVereinRepository ..|> VereinRepositoryPort : implements
 InMemorySpendenabsichtRepository ..|> SpendenabsichtRepositoryPort : implements
+Muster034122HtmlAdapter ..|> ZuwendungsbestaetigungDokumentPort : implements
 SpendenWizardWebAdapter ..> VanillaQREngine : rendertSVG
       </pre>
     </div>
