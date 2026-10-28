@@ -251,13 +251,13 @@ namespace InboundPorts_Driving {
     +registriere(command: RegistriereSpendenabsichtCommand) Spendenabsicht
   }
   class RegistriereSpendenabsichtCommand {
-    +String vereinSlug
-    +String zweckParagraf
-    +BigDecimal betrag
-    +String spenderName
-    +Adresse spenderAnschrift
-    +String spenderEmail
-    +Boolean gegenleistungsverzichtBestaetigt
+    +vereinSlug: String
+    +zweckParagraf: String
+    +betrag: BigDecimal
+    +spenderName: String
+    +spenderAnschrift: Adresse
+    +spenderEmail: String?
+    +gegenleistungsverzichtBestaetigt: Boolean
   }
 }
 
@@ -338,13 +338,13 @@ Die nachfolgenden formalen Integritätsbedingungen sichern die steuerrechtliche 
 1. **Gültigkeit des Freistellungsbescheids (§ 63 Abs. 5 AO):**
    ```ocl
    context Freistellungsbescheid::istGueltigAm(datum: Date): Boolean
-   body: !datum.isBefore(self.bescheidDatum) and datum <= self.bescheidDatum.addYears(5)
+   body: not datum.isBefore(self.bescheidDatum) and datum <= self.bescheidDatum.addYears(5)
    ```
 
 2. **Gültigkeit des Feststellungsbescheids (§ 60a AO):**
    ```ocl
    context Feststellungsbescheid::istGueltigAm(datum: Date): Boolean
-   body: !datum.isBefore(self.bescheidDatum) and datum <= self.bescheidDatum.addYears(3)
+   body: not datum.isBefore(self.bescheidDatum) and datum <= self.bescheidDatum.addYears(3)
    ```
 
 3. **Gültiger Bescheid bei Ausstellung:**

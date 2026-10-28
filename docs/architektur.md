@@ -48,8 +48,8 @@ flowchart TD
   InPort --> AppService
   AppService --> Domain
   AppService --> OutPort
-  OutPort --> Persistence
-  OutPort --> PdfOut
+  Persistence --> OutPort
+  PdfOut --> OutPort
 ```
 
 ### Paketstruktur

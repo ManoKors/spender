@@ -8,7 +8,7 @@ import de.ad26.team07.domain.model.*
 import java.math.BigDecimal
 import java.time.LocalDate
 
-class SimpleVereinRepository : VereinRepositoryPort {
+class InMemoryVereinRepository : VereinRepositoryPort {
     private val vereine = mutableMapOf<String, Zuwendungsempfaenger>()
     override fun findeNachSlug(slug: String): Zuwendungsempfaenger? = vereine[slug]
     override fun speichere(verein: Zuwendungsempfaenger) {
@@ -16,7 +16,7 @@ class SimpleVereinRepository : VereinRepositoryPort {
     }
 }
 
-class SimpleSpendenabsichtRepository : SpendenabsichtRepositoryPort {
+class InMemorySpendenabsichtRepository : SpendenabsichtRepositoryPort {
     private val absichten = mutableListOf<Spendenabsicht>()
     override fun speichere(spendenabsicht: Spendenabsicht) {
         absichten.add(spendenabsicht)
@@ -33,8 +33,8 @@ fun main() {
     println("================================================================================\n")
 
     // 1. Repositories initialisieren
-    val vereinRepo = SimpleVereinRepository()
-    val spendenabsichtRepo = SimpleSpendenabsichtRepository()
+    val vereinRepo = InMemoryVereinRepository()
+    val spendenabsichtRepo = InMemorySpendenabsichtRepository()
     val wizardService = SpendenabsichtService(vereinRepo, spendenabsichtRepo)
 
     // 2. Sample-Vereine anlegen (White-Label Mandanten)

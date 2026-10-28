@@ -16,6 +16,7 @@ flowchart LR
     classDef actorStyle fill:#f8fafc,stroke:#2563eb,stroke-width:2px,font-weight:bold
     classDef ucStyle fill:#ffffff,stroke:#1e40af,stroke-width:1.5px
     classDef subUcStyle fill:#f0fdf4,stroke:#16a34a,stroke-width:1.5px
+    classDef extUcStyle fill:#fefce8,stroke:#ca8a04,stroke-width:1.5px
     classDef boundaryStyle fill:#fafafa,stroke:#94a3b8,stroke-width:2px,stroke-dasharray: 4 4
 
     subgraph SpenderBoundary ["Initiator (Spenderseite)"]
@@ -27,7 +28,6 @@ flowchart LR
         UC1_1(["UC-1.1: Gegenleistungsverzicht erklären"]):::subUcStyle
         UC1_2(["UC-1.2: EPC-GiroCode generieren"]):::subUcStyle
 
-        UC2(["UC-2: Spende per Banking-App überweisen"]):::ucStyle
         UC3(["UC-3: Geldeingang verbuchen & Referenz abgleichen"]):::ucStyle
 
         UC4(["UC-4: Zuwendungsbestätigung ausstellen"]):::ucStyle
@@ -38,14 +38,19 @@ flowchart LR
         UC6(["UC-6: White-Label-Mandantenprofil konfigurieren"]):::ucStyle
     end
 
+    subgraph ExternalPayment ["Externer Kontext (Banking-App / Hausbank)"]
+        UC2(["UC-2: Spende per Banking-App überweisen<br/><i>(Zahlungsanweisung via EPC-GiroCode)</i>"]):::extUcStyle
+    end
+
     subgraph VereinBoundary ["Verwaltung & Externe"]
         Kassenwart["👤 Kassenwart / Vereinsvorstand<br/><i>(Zuwendungsempfänger)</i>"]:::actorStyle
-        Finanzamt["🏛️ Finanzamt<br/><i>(Steueraufsicht & Prüfung)</i>"]:::actorStyle
+        Finanzamt["🏛️ Finanzamt<br/><i>(Erteilt Freistellungs- / Feststellungsbescheid)</i>"]:::actorStyle
     end
 
     %% Spender-Interaktionen
     Spender --- UC1
     Spender --- UC2
+    UC1_2 -.->|«liefert GiroCode für»| UC2
 
     %% Includes für UC-1 (Richtung: Basis-UC -> Included-UC)
     UC1 -.->|«include»| UC1_1
@@ -57,12 +62,12 @@ flowchart LR
     UC5 --- Kassenwart
     UC6 --- Kassenwart
 
+    %% Finanzamt als ausstellende Behörde für Bescheide (Assoziation zu UC-5)
+    UC5 --- Finanzamt
+
     %% Includes & Extends für UC-4
     UC4 -.->|«include»| UC4_1
     UC4_2 -.->|«extend»<br/>[Bedingung: Betrag <= 300 €]| UC4
-
-    %% Finanzamt als nachprüfende Behörde
-    UC4_1 -.->|«bezieht sich auf Bescheid von»| Finanzamt
 ```
 
 ---
@@ -87,9 +92,10 @@ flowchart LR
   * **UC-1.2: EPC-GiroCode generieren (`«include»`):** Das System erzeugt einen standardisierten SEPA-Credit-Transfer-Payload (EPC069-08) mit dynamischem Referenzcode (`SP-YYYY-NNNN`), um fehlerfreie Banküberweisungen zu ermöglichen.
 * **Nachbedingung:** Spendenabsicht im Status `ANGEKUENDIGT` gespeichert; Spender sieht IBAN und scanbaren QR-Code.
 
-### UC-2: Spende per Banking-App überweisen
-* **Akteur:** Spender
-* **Beschreibung:** Der Spender scannt den GiroCode mit seiner Banking-App (oder kopiert IBAN, Betrag und Referenzcode) und autorisiert die SEPA-Überweisung bei seiner Hausbank.
+### UC-2: Spende per Banking-App überweisen (Externer Vorgang)
+* **Akteur:** Spender (Interaktion mit eigener Banking-App / Hausbank)
+* **Beschreibung:** Der Spender scannt den in UC-1.2 generierten GiroCode mit seiner Banking-App (oder kopiert IBAN, Betrag und Referenzcode) und autorisiert die SEPA-Überweisung bei seiner Hausbank.
+* **Systemgrenzen-Einordnung:** Dieser Anwendungsfall läuft außerhalb des Kernsystems im Drittsystem der Bank des Spenders ab und ist über den normierten EPC069-08 QR-Code nahtlos mit dem Spendenprozess gekoppelt.
 * **Nachbedingung:** Zahlungsauftrag bei der Bank des Spenders ausgelöst.
 
 ### UC-3: Geldeingang verbuchen & Referenz abgleichen
@@ -101,13 +107,13 @@ flowchart LR
 * **Akteur:** Kassenwart
 * **Beschreibung:** Der Kassenwart stößt für eine eingegangene Geldzuwendung die Erstellung des amtlichen PDF-Formulars (Muster 034122) an.
 * **Included & Extended Use Cases:**
-  * **UC-4.1: Steuerliche Voraussetzungen prüfen (`«include»`):** Zwingende Vorab-Prüfung aller steuerlichen Bedingungen (Bescheiddatum ≤ 5 bzw. 3 Jahre, Satzungszweck-Deckung, Gegenleistungsverzicht).
+  * **UC-4.1: Steuerliche Voraussetzungen prüfen (`«include»`):** Zwingende automatische Vorab-Prüfung aller steuerlichen Bedingungen (Bescheiddatum ≤ 5 bzw. 3 Jahre, Satzungszweck-Deckung, Gegenleistungsverzicht).
   * **UC-4.2: Vereinfachten Nachweis vorschlagen (`«extend»`):** Falls der Betrag ≤ 300 € ist (§ 50 Abs. 4 EStDV), weist das System darauf hin, dass ein Kontoauszug genügt, ermöglicht aber auf Wunsch die Ausstellung.
 * **Nachbedingung:** Rechtsgültiges PDF (Muster 034122) mit eindeutiger Bestätigungsnummer generiert und gesichert.
 
 ### UC-5: Gemeinnützigkeitsbescheid pflegen
-* **Akteur:** Kassenwart
-* **Beschreibung:** Erfassen und Aktualisieren von Freistellungsbescheiden (Gültigkeit: max. 5 Jahre ab Erlass) oder Feststellungsbescheiden (§ 60a AO, max. 3 Jahre ab Erlass) sowie Pflege des letzten Veranlagungszeitraums.
+* **Akteure:** Kassenwart (primär erfassend), Finanzamt (sekundär, ausstellende Behörde)
+* **Beschreibung:** Erfassen und Aktualisieren von Freistellungsbescheiden (Gültigkeit: max. 5 Jahre ab Erlass) oder Feststellungsbescheiden (§ 60a AO, max. 3 Jahre ab Erlass) des zuständigen Finanzamts sowie Pflege des letzten Veranlagungszeitraums.
 * **Nachbedingung:** Neuer Bescheid mit Bescheiddatum, Steuernummer und geförderten Zwecken hinterlegt.
 
 ### UC-6: White-Label-Mandantenprofil konfigurieren

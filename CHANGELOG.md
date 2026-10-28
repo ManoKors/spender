@@ -37,6 +37,19 @@ und dieses Projekt hält sich an [Semantic Versioning](https://semver.org/lang/d
 - **Automatisierte Testsuite (19 Tests):**
   - Vollständige Abdeckung aller Bescheidfristen (§ 63 Abs. 5 AO, § 60a AO), Spendenabsichts-Invarianten, GiroCode-Integrität und Inbound Use Cases.
 
+### Changed
+- **UML 2.5 Use-Case-Modell & Systemgrenzen-Harmonisierung:**
+  - `UC-2` (Spende per Banking-App überweisen) aus der internen Systemgrenze in einen expliziten externen Kontext (`ExternalPayment`) überführt, da die Zahlungsanweisung bei der Hausbank des Spenders erfolgt.
+  - Kopplung zwischen `UC-1.2` (EPC-GiroCode generieren) und `UC-2` per Dependency-Pfeil (`«liefert GiroCode für»`) präzisiert.
+  - Das `Finanzamt` als externen Akteur formal korrekt über eine Standard-Assoziation an `UC-5` (Gemeinnützigkeitsbescheid pflegen) angebunden; die zuvor unzulässige gestrichelte Kante von `UC-4.1` zum Akteur entfernt.
+- **Klassendatenmodell & OCL-Harmonisierung:**
+  - Attributnotation in `InboundPorts_Driving` (`RegistriereSpendenabsichtCommand`) auf den formalen UML 2.5-Standard (`+name: Type`) vereinheitlicht.
+  - OCL 1 und OCL 2 auf normgerechte OCL-Syntax (`not` statt `!`) angepasst.
+  - Attributname `hinweisKeinAusschlussBeitrag` im interaktiven HTML-Viewer (`datenmodell_zuwendungsbestaetigung_034122.html`) mit dem Markdown-Modell synchronisiert.
+- **Hexagonale Architektur & DIP-Konformität:**
+  - Pfeilrichtungen der Outbound-Ports in [`docs/architektur.md`](docs/architektur.md) korrigiert (`Persistence --> OutPort`, `PdfOut --> OutPort`), sodass alle Pfeile von den äußeren Adaptern nach innen zum Kern zeigen (Dependency Inversion Principle).
+  - Demo-Repositories in [`src/main/kotlin/de/ad26/team07/Main.kt`](src/main/kotlin/de/ad26/team07/Main.kt) von `Simple...` in `InMemoryVereinRepository` und `InMemorySpendenabsichtRepository` umbenannt zur 1:1-Übereinstimmung mit dem UML-Klassendiagramm und den Modultests.
+
 ### Fixed
 - **Mermaid 11 Diagramm-Rendering im interaktiven HTML-Viewer:**
   - Behebung von `Syntax error in text`- und `DOM parser`-Fehlern in [`fachdomäne/fachdomäneVerein/datenmodell_zuwendungsbestaetigung_034122.html`](fachdomäne/fachdomäneVerein/datenmodell_zuwendungsbestaetigung_034122.html):
