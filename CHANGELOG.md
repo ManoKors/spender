@@ -79,12 +79,17 @@ und dieses Projekt hält sich an [Semantic Versioning](https://semver.org/lang/d
   - `.gitignore` korrigiert (`/out/` statt `out/`), wodurch das Application-Package `de.ad26.team07.application.port.out` nicht mehr fälschlicherweise als Compiler-Ausgabeverzeichnis ignoriert wird.
 - **QR-Code-Generierung im Demo-Wizard:**
   - Behebung von `code length overflow`- und CDN-Blockierungsfehlern beim Generieren des EPC-GiroCodes durch Umstellung auf autarkes `VanillaQR`.
-- **Interaktiver Zuwendungsbestätigungs-Viewer im Spenden-Wizard:**
+- **Interaktiver Zuwendungsbestätigungs-Viewer & Druckoptimierung im Spenden-Wizard:**
   - Behebung des Anzeige-Fehlers beim Klick auf *„Amtliche Zuwendungsbestätigung (Muster 034122) anzeigen & drucken“* in [`demo/spenden_wizard.html`](demo/spenden_wizard.html):
     - Ergänzung der fehlenden CSS-Aktivierungsregel `.modal-backdrop.active { display: flex !important; }`.
     - Absicherung der Datenversorgung via `ensurePledgeData()` mit Fallback-Initialisierung gegen `undefined`/`null`-Abbrüche.
     - Direkte Umschaltung von `style.display` (`flex`/`none`) und Hinzufügen von Backdrop-Click- und `ESC`-Schließ-Handlern.
     - Einführung der dedizierten Button-Klasse `.btn-receipt-action` für zuverlässige und barrierefreie Interaktion.
+  - **Drucklayout-Harmonisierung nach BMF-Muster 034122 (100% DIN A4):**
+    - Behebung fehlerhafter Umbrüche und unvollständiger Tabellenränder beim Browser-Druck durch `@page { size: A4 portrait; margin: 15mm 20mm; }` und `print-color-adjust: exact !important`.
+    - Vollständige Isolation des Dokuments im Druck-Stylesheet (Ausblenden von App-Container, Backdrop und Navigation, sodass ausschließlich die DIN-A4-Seite gedruckt wird).
+    - Übernahme des amtlichen 2-Spalten-Headers (Aussteller links, Zuwendender rechts) und normgerechter Checkboxen (`☐ Ja    ☑ Nein`).
+    - Neue Option *„↗ In neuem Tab öffnen“* zum isolierten Öffnen und Abspeichern der Druckseite in einem eigenständigen Browser-Tab.
 
 ### Geplant
 - Direkter PDF/A-3-Export der Zuwendungsbestätigung per Headless-Rendering oder OpenPDF/iText.

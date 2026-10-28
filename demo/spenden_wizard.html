@@ -417,33 +417,49 @@
       font-size: 0.85rem;
     }
     .btn-close:hover { background: #f1f5f9; }
+    .btn-open-new {
+      background: #fff;
+      color: #1d4ed8;
+      border: 1px solid #93c5fd;
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+    .btn-open-new:hover { background: #eff6ff; }
 
-    /* Formular-Layout nach BMF-Muster 034122 */
+    /* Formular-Layout nach amtlichem BMF-Muster 034122 (Fassung 2013) */
     .document-page {
       background: #fff;
       padding: 24px 32px;
       color: #111;
-      font-size: 10pt;
+      font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+      font-size: 10.5pt;
       line-height: 1.4;
     }
     .doc-header-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
     .doc-header-table td {
       vertical-align: top;
       width: 50%;
+      font-size: 10.5pt;
+      line-height: 1.4;
     }
     .doc-box {
       border: 1px solid #333;
       padding: 10px 12px;
-      min-height: 95px;
-      font-size: 9pt;
-      line-height: 1.35;
+      min-height: 105px;
     }
     .doc-box-title {
-      font-size: 7.5pt;
+      font-size: 8.5pt;
       font-weight: bold;
       color: #555;
       text-transform: uppercase;
@@ -451,37 +467,37 @@
     }
     .doc-title-block {
       text-align: center;
-      margin: 12px 0 10px 0;
+      margin: 14px 0 12px 0;
       border-top: 2px solid #000;
       border-bottom: 2px solid #000;
       padding: 6px 0;
     }
     .doc-title-main {
-      font-size: 11pt;
+      font-size: 13pt;
       font-weight: bold;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.5px;
     }
     .doc-title-sub {
-      font-size: 7.5pt;
+      font-size: 8.5pt;
       margin-top: 3px;
       color: #333;
-      line-height: 1.25;
+      line-height: 1.3;
     }
     .doc-data-table {
       width: 100%;
       border-collapse: collapse;
-      margin: 8px 0;
-      font-size: 9pt;
+      margin: 10px 0;
+      font-size: 10.5pt;
     }
     .doc-data-table th, .doc-data-table td {
       border: 1px solid #444;
-      padding: 5px 8px;
+      padding: 6px 8px;
       vertical-align: middle;
     }
     .doc-data-table th {
-      background: #f8fafc;
+      background: #f2f2f2;
       text-align: left;
-      font-size: 8.5pt;
+      font-size: 9.5pt;
       width: 32%;
     }
     .doc-amount-words {
@@ -489,58 +505,93 @@
       font-weight: bold;
     }
     .doc-legal-text {
-      font-size: 8pt;
-      line-height: 1.35;
+      font-size: 9pt;
+      line-height: 1.45;
       text-align: justify;
-      margin: 10px 0;
+      margin: 12px 0;
     }
     .doc-confirmation {
       border: 1px solid #444;
-      padding: 8px 10px;
-      margin: 8px 0;
-      background: #fcfcfc;
-      font-size: 8.5pt;
-      line-height: 1.35;
+      padding: 10px 12px;
+      margin: 12px 0;
+      background: #fafafa;
+      font-size: 9.5pt;
+      line-height: 1.4;
     }
     .doc-signature-grid {
       display: flex;
       justify-content: space-between;
-      margin-top: 20px;
-      font-size: 8.5pt;
+      margin-top: 28px;
+      font-size: 10pt;
     }
     .doc-signature-box {
       width: 46%;
       border-top: 1px solid #000;
-      padding-top: 5px;
+      padding-top: 6px;
       text-align: center;
     }
     .doc-footer-note {
-      font-size: 7pt;
-      line-height: 1.3;
-      color: #666;
+      font-size: 7.5pt;
+      line-height: 1.35;
+      color: #555;
       border-top: 1px solid #ccc;
       padding-top: 6px;
-      margin-top: 16px;
+      margin-top: 20px;
     }
 
     @media print {
-      body * { visibility: hidden; }
-      #receiptModal, #receiptModal * { visibility: visible; }
+      @page {
+        size: A4 portrait;
+        margin: 15mm 20mm;
+      }
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      html, body {
+        background: #ffffff !important;
+        color: #111111 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+      }
+      /* UI-Elemente für den Druck ausblenden */
+      .container, .mandant-switcher, .card, .modal-bar {
+        display: none !important;
+      }
+      /* Das Modal wird direkt zum sauberen DIN-A4-Dokument */
       #receiptModal {
-        position: absolute;
-        top: 0; left: 0; width: 100%; height: auto;
-        background: transparent;
-        padding: 0;
         display: block !important;
+        position: static !important;
+        width: 100% !important;
+        height: auto !important;
+        background: transparent !important;
+        backdrop-filter: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
       }
       .modal-content {
-        max-width: 100%;
-        max-height: none;
-        box-shadow: none;
-        border-radius: 0;
+        display: block !important;
+        position: static !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        max-height: none !important;
+        box-shadow: none !important;
+        border: none !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
       }
-      .modal-bar { display: none !important; }
-      .document-page { padding: 0; width: 100%; }
+      .document-page {
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-shadow: none !important;
+      }
     }
   </style>
 </head>
@@ -704,6 +755,7 @@
       </div>
       <div style="display: flex; gap: 8px;">
         <button type="button" class="btn-print" onclick="window.print()">🖨️ Drucken / PDF</button>
+        <button type="button" class="btn-open-new" onclick="openPrintWindow()">↗ In neuem Tab öffnen</button>
         <button type="button" class="btn-close" onclick="closeReceiptModal()">✕ Schließen</button>
       </div>
     </div>
@@ -1008,55 +1060,52 @@
     const html = `
       <table class="doc-header-table">
         <tr>
-          <td style="padding-right: 12px;">
+          <td style="padding-right: 8px;">
             <div class="doc-box">
-              <div class="doc-box-title">Aussteller (Bezeichnung und Anschrift der steuerbegünstigten Einrichtung)</div>
+              <div class="doc-box-title">Aussteller (Steuerbegünstigte Körperschaft)</div>
               <strong>${m.name}</strong><br>
               ${m.street}<br>
-              ${m.city}
+              ${m.city}<br>
+              <span style="font-size: 8.5pt; color: #333;">Finanzamt: ${m.taxOffice} | StNr: ${m.taxId}</span>
             </div>
           </td>
-          <td style="padding-left: 12px;">
+          <td style="padding-left: 8px;">
             <div class="doc-box">
-              <div class="doc-box-title">Bestätigungs-Nr. & Steuerdaten</div>
-              <strong>Bestätigungs-Nr.:</strong> ${p.receiptNo}<br>
-              <strong>Finanzamt:</strong> ${m.taxOffice}<br>
-              <strong>Steuernummer:</strong> ${m.taxId}
+              <div class="doc-box-title">Zuwendender (Name & Anschrift)</div>
+              <strong>${p.donorName}</strong><br>
+              ${p.donorStreet}<br>
+              ${p.donorCity}<br>
+              Deutschland
             </div>
           </td>
         </tr>
       </table>
 
       <div class="doc-title-block">
-        <div class="doc-title-main">BESTÄTIGUNG ÜBER GELDZUWENDUNGEN / MITGLIEDSBEITRAG</div>
-        <div class="doc-title-sub">im Sinne des § 10b des Einkommensteuergesetzes an eine der in § 5 Abs. 1 Nr. 9 des Körperschaftsteuergesetzes bezeichneten Körperschaften, Personenvereinigungen oder Vermögensmassen<br>(Amtliches BMF-Muster 034122)</div>
-      </div>
-
-      <div class="doc-box" style="margin-bottom: 12px; min-height: 55px;">
-        <div class="doc-box-title">Name und Anschrift des Zuwendenden:</div>
-        <strong>${p.donorName}</strong><br>
-        ${p.donorStreet}, ${p.donorCity}
+        <div class="doc-title-main">Bestätigung über Geldzuwendungen / Mitgliedsbeitrag</div>
+        <div class="doc-title-sub">im Sinne des § 10b des Einkommensteuergesetzes an eine der in § 5 Abs. 1 Nr. 9 des Körperschaftsteuergesetzes bezeichneten Körperschaften, Personenvereinigungen oder Vermögensmassen</div>
       </div>
 
       <table class="doc-data-table">
         <tr>
-          <th>Betrag der Zuwendung in Ziffern:</th>
-          <td style="font-size: 11pt; font-weight: bold; color: #111;">${p.amount.toFixed(2)} EUR</td>
+          <th>Betrag in Ziffern</th>
+          <td><strong style="font-size: 11.5pt;">${p.amount.toFixed(2)} EUR</strong></td>
         </tr>
         <tr>
-          <th>Betrag der Zuwendung in Worten:</th>
+          <th>Betrag in Buchstaben</th>
           <td class="doc-amount-words">${amountWords}</td>
         </tr>
         <tr>
-          <th>Tag der Zuwendung (Eingang):</th>
+          <th>Tag der Zuwendung</th>
           <td>${p.date}</td>
         </tr>
+        <tr>
+          <th>Verzicht auf Erstattung von Aufwendungen</th>
+          <td>
+            <span style="font-size: 11pt;">☐ Ja &nbsp;&nbsp;&nbsp;&nbsp; <strong>☑ Nein</strong></span>
+          </td>
+        </tr>
       </table>
-
-      <div style="font-size: 8.5pt; margin: 8px 0; border: 1px solid #ddd; padding: 6px 10px; background: #fafafa;">
-        <strong>Es handelt sich um den Verzicht auf Erstattung von Aufwendungen:</strong>
-        <span style="margin-left: 20px;">[ &nbsp; ] Ja &nbsp;&nbsp;&nbsp;&nbsp; <strong>[ X ] Nein</strong></span>
-      </div>
 
       <div class="doc-legal-text">
         Wir sind wegen <strong>Förderung der ${p.purpose}</strong> nach dem letzten uns zugegangenen
@@ -1067,22 +1116,29 @@
       </div>
 
       <div class="doc-confirmation">
-        <strong>Bestätigung:</strong> Es wird bestätigt, dass die Zuwendung nur zur Förderung der steuerbegünstigten Zwecke verwendet wird.
+        Es wird bestätigt, dass die Zuwendung nur zur Förderung <strong>${p.purpose}</strong> verwendet wird.<br><br>
+        <strong>☑ Es wird bestätigt, dass es sich nicht um einen Mitgliedsbeitrag handelt, dessen Abzug nach § 10b Abs. 1 Satz 8 EStG ausgeschlossen ist.</strong>
+      </div>
+
+      <div style="margin-top: 14px; font-size: 9.5pt; color: #333;">
+        Bestätigungsnummer: <strong>${p.receiptNo}</strong>
       </div>
 
       <div class="doc-signature-grid">
         <div class="doc-signature-box">
           ${m.city}, den ${p.date}<br>
-          <span style="font-size: 7.5pt; color: #666;">(Ort, Datum)</span>
+          <span style="font-size: 8pt; color: #666;">(Ort, Datum der Ausstellung)</span>
         </div>
         <div class="doc-signature-box">
           ${m.name}<br>
-          <span style="font-size: 7.5pt; color: #666;">(Unterschrift des Zuwendungsempfängers / Vorstand)</span>
+          <span style="font-size: 8pt; color: #666;">(Unterschrift des Zuwendungsempfängers / Vorstand)</span>
         </div>
       </div>
 
       <div class="doc-footer-note">
-        <strong>Hinweis:</strong> Wer vorsätzlich oder grob fahrlässig eine unrichtige Zuwendungsbestätigung erstellt oder wer veranlasst, dass Zuwendungen nicht zu den in der Bestätigung angegebenen steuerbegünstigten Zwecken verwendet werden, haftet für die Steuer, die dem Fiskus durch einen etwaigen unberechtigten Spendenabzug entgeht (§ 10b Abs. 4 EStG). Diese Bestätigung wird nicht als Nachweis für die steuerliche Berücksichtigung der Zuwendung anerkannt, wenn das Datum des Freistellungsbescheides länger als 5 Jahre bzw. das Datum der Feststellung der Einhaltung der satzungsmäßigen Voraussetzungen nach § 60a Abs. 1 AO länger als 3 Jahre seit Ausstellung der Bestätigung zurückliegt (§ 63 Abs. 5 AO).
+        <strong>Hinweis:</strong> Wer vorsätzlich oder grob fahrlässig eine unrichtige Zuwendungsbestätigung erstellt oder wer veranlasst, dass Zuwendungen nicht zu den in der Zuwendungsbestätigung angegebenen steuerbegünstigten Zwecken verwendet werden, haftet für die entgangene Steuer (§ 10b Abs. 4 EStG, § 9 Abs. 3 KStG, § 9 Nr. 5 GewStG).<br>
+        Diese Bestätigung wird nicht als Nachweis für die steuerliche Berücksichtigung der Zuwendung anerkannt, wenn das Datum des Freistellungsbescheides länger als 5 Jahre bzw. das Datum der Feststellung der Einhaltung der satzungsmäßigen Voraussetzungen nach § 60a Abs. 1 AO länger als 3 Jahre seit Ausstellung der Bestätigung zurückliegt (BMF vom 15.12.1994 - BStBl I S. 884).<br>
+        <span style="float: right; margin-top: 2px;">BMF Muster 034122 (Fassung 2013)</span>
       </div>
     `;
 
@@ -1090,6 +1146,59 @@
     const modal = document.getElementById('receiptModal');
     modal.style.display = 'flex';
     modal.classList.add('active');
+  }
+
+  function openPrintWindow() {
+    const p = ensurePledgeData();
+    const receiptHtml = document.getElementById('printableReceipt').innerHTML;
+    const win = window.open('', '_blank');
+    if (!win) {
+      window.print();
+      return;
+    }
+    win.document.open();
+    win.document.write(`
+      <!DOCTYPE html>
+      <html lang="de">
+      <head>
+        <meta charset="UTF-8">
+        <title>Zuwendungsbestätigung ${p.receiptNo}</title>
+        <style>
+          @page { size: A4 portrait; margin: 15mm 20mm; }
+          * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; color: #111; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          body { background: #fff; padding: 15mm 20mm; font-size: 10.5pt; line-height: 1.4; }
+          @media print { body { padding: 0; } .print-bar { display: none !important; } }
+          .print-bar { width: 100%; margin-bottom: 20px; padding: 10px 16px; background: #f1f5f9; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #cbd5e1; }
+          .btn { background: #059669; color: #fff; border: none; padding: 8px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+          .btn:hover { background: #047857; }
+          .doc-header-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+          .doc-header-table td { vertical-align: top; width: 50%; font-size: 10.5pt; line-height: 1.4; }
+          .doc-box { border: 1px solid #333; padding: 10px 12px; min-height: 105px; }
+          .doc-box-title { font-size: 8.5pt; font-weight: bold; color: #555; text-transform: uppercase; margin-bottom: 4px; }
+          .doc-title-block { text-align: center; margin: 14px 0 12px 0; border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 6px 0; }
+          .doc-title-main { font-size: 13pt; font-weight: bold; letter-spacing: 0.5px; }
+          .doc-title-sub { font-size: 8.5pt; margin-top: 3px; color: #333; line-height: 1.3; }
+          .doc-data-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 10.5pt; }
+          .doc-data-table th, .doc-data-table td { border: 1px solid #444; padding: 6px 8px; vertical-align: middle; }
+          .doc-data-table th { background: #f2f2f2; text-align: left; font-size: 9.5pt; width: 32%; }
+          .doc-amount-words { font-style: italic; font-weight: bold; }
+          .doc-legal-text { font-size: 9pt; line-height: 1.45; text-align: justify; margin: 12px 0; }
+          .doc-confirmation { border: 1px solid #444; padding: 10px 12px; margin: 12px 0; background: #fafafa; font-size: 9.5pt; line-height: 1.4; }
+          .doc-signature-grid { display: flex; justify-content: space-between; margin-top: 28px; font-size: 10pt; }
+          .doc-signature-box { width: 46%; border-top: 1px solid #000; padding-top: 6px; text-align: center; }
+          .doc-footer-note { font-size: 7.5pt; line-height: 1.35; color: #555; border-top: 1px solid #ccc; padding-top: 6px; margin-top: 20px; }
+        </style>
+      </head>
+      <body>
+        <div class="print-bar">
+          <span style="font-size: 13px; color: #334155;">Amtliche Zuwendungsbestätigung nach BMF Muster 034122 (Fassung 2013)</span>
+          <button class="btn" onclick="window.print()">🖨️ Drucken / PDF speichern</button>
+        </div>
+        ${receiptHtml}
+      </body>
+      </html>
+    `);
+    win.document.close();
   }
 
   function closeReceiptModal() {
