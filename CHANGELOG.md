@@ -12,7 +12,16 @@ und dieses Projekt hält sich an [Semantic Versioning](https://semver.org/lang/d
 ### Added
 - **Hexagonale Architektur (Ports & Adapters):**
   - Aufteilung des Codes in `domain` (Kern), `application` (Ports & Use Cases) und `adapter` (Infrastruktur).
-  - Architektur- und Entwurfsentscheidungen ADR 04 und ADR 05.
+  - Outbound-Ports [`VereinRepositoryPort`](src/main/kotlin/de/ad26/team07/application/port/out/VereinRepositoryPort.kt) und [`SpendenabsichtRepositoryPort`](src/main/kotlin/de/ad26/team07/application/port/out/SpendenabsichtRepositoryPort.kt) für lose Persistenz- und Schnittstellenkopplung.
+  - Architektur- und Entwurfsentscheidungen ADR 04, ADR 05 und ADR 06.
+- **UML-Modellierung & 3-Level-Datenmodell (UML 2.5):**
+  - Harmonisierung des Klassendatenmodells ([`fachdomäne/fachdomäneVerein/datenmodell.md`](fachdomäne/fachdomäneVerein/datenmodell.md)) mit den neuen Entitäten (`Spendenabsicht`, `WhiteLabelKonfiguration`, `GiroCodeGenerator`, `Zuwendungsempfaenger`) und exakten UML-Beziehungsrichtungen (`*--`, `o--`, `-->`, `<|--`, `..|>`, `..>`).
+  - Interaktiver 3-Ebenen-UML-Viewer ([`fachdomäne/fachdomäneVerein/datenmodell_zuwendungsbestaetigung_034122.html`](fachdomäne/fachdomäneVerein/datenmodell_zuwendungsbestaetigung_034122.html)) mit Zoom, Tab-Navigation und drill-down (`Gemeinnützigkeitsbescheid 🔍` -> Level 2):
+    - *Level 1: Fachdomäne Gesamtübersicht* (Stammdaten, Spenden-Wizard, Bescheidwesen, Nachweis).
+    - *Level 2: Detailmodell Gemeinnützigkeitsbescheid & Fristen* (§ 63 Abs. 5 AO und § 60a AO).
+    - *Level 3: Hexagonale Architektur (Ports & Adapters)* (Driving/Driven Ports, Application Service, In-Memory- & Web-Adapter).
+  - Formales UML-Anwendungsfalldiagramm ([`fachdomäne/fachdomäneVerein/usecase_diagramm.md`](fachdomäne/fachdomäneVerein/usecase_diagramm.md)) basierend auf [`prozesstabelle.md`](fachdomäne/fachdomäneVerein/prozesstabelle.md) inklusive «include»- und «extend»-Beziehungen sowie lückenloser Traceability-Matrix.
+  - Erweiterung des Glossars ([`fachdomäne/fachdomäneVerein/glossarVerein.md`](fachdomäne/fachdomäneVerein/glossarVerein.md)) um die Geschäftsobjekte `Spendenabsicht`, `EPC-GiroCode` und `White-Label-Konfiguration`.
 - **White-Label Spenden-Wizard & Spendenabsichten:**
   - Value Objects `WhiteLabelKonfiguration`, `Spender`, `Adresse`, `SteuerbeguenstigterZweck`.
   - Entität `Spendenabsicht` (Pledge) mit Status-Zyklus (`ANGEKUENDIGT`, `EINGEGANGEN`, `ABGELAUFEN`).
@@ -20,6 +29,25 @@ und dieses Projekt hält sich an [Semantic Versioning](https://semver.org/lang/d
   - Domain Service `GiroCodeGenerator` nach europäischem EPC069-08 Standard.
   - Inbound-Use-Case `RegistriereSpendenabsichtUseCase` mit `SpendenabsichtService`.
   - Use-Case-Spezifikation (Teil 3) in der Prozesstabelle.
+- **Autarke Client-Side QR-Code-Engine (VanillaQR):**
+  - Zero-Dependency JavaScript-Implementierung ([`demo/vanilla_qr.js`](demo/vanilla_qr.js)) zur Generierung von EPC069-08 SEPA-GiroCodes.
+  - Vektor-SVG-Rendering ohne externe CDN-Abhängigkeiten (100% offline- und `file:///`-fähig).
+  - Volle UTF-8-Unterstützung für deutsche Sonderzeichen und Umlaute in Verwendungszwecken und Vereinsnamen.
+  - Interaktive Komfort-Funktionen in [`demo/spenden_wizard.html`](demo/spenden_wizard.html): One-Click-Copy für SEPA-Felder, Rohdaten-Payload-Inspektion und Auto-Fill für Testdaten.
+- **Automatisierte Testsuite (19 Tests):**
+  - Vollständige Abdeckung aller Bescheidfristen (§ 63 Abs. 5 AO, § 60a AO), Spendenabsichts-Invarianten, GiroCode-Integrität und Inbound Use Cases.
+
+### Fixed
+- **Mermaid 11 Diagramm-Rendering im interaktiven HTML-Viewer:**
+  - Behebung von `Syntax error in text`- und `DOM parser`-Fehlern in [`fachdomäne/fachdomäneVerein/datenmodell_zuwendungsbestaetigung_034122.html`](fachdomäne/fachdomäneVerein/datenmodell_zuwendungsbestaetigung_034122.html):
+    - HTML-Escaping von UML-Stereotypen als `&lt;&lt;...&gt;&gt;` (`&lt;&lt;interface&gt;&gt;`, `&lt;&lt;abstract&gt;&gt;`, `&lt;&lt;service&gt;&gt;`, `&lt;&lt;enumeration&gt;&gt;`), um fehlerhafte DOM-Tag-Synthesen (`<interface>`) durch den Browser-HTML-Parser zu verhindern.
+    - Korrektur der Realisierungs-Kanten auf die standardkonforme Mermaid-Syntax `..|>` (implementierende Klasse zeigt auf Schnittstelle) anstelle des nicht unterstützten `<|..`.
+    - Behebung des DAGRE-Graph-Fehlers (`Cannot read properties of undefined (reading 'attr')`) durch Verknüpfung konkreter Klassenentitäten (`Spendenabsicht`, `Zuwendungsempfaenger`) anstelle des übergeordneten Namespace-Clusters `DomainCore`.
+    - Bereinigung von Sonderzeichen (`§`) in Node-Labels zur Vermeidung von Lexer-Abbrüchen in Mermaid 11.
+- **Git-Tracking für Outbound Ports:**
+  - `.gitignore` korrigiert (`/out/` statt `out/`), wodurch das Application-Package `de.ad26.team07.application.port.out` nicht mehr fälschlicherweise als Compiler-Ausgabeverzeichnis ignoriert wird.
+- **QR-Code-Generierung im Demo-Wizard:**
+  - Behebung von `code length overflow`- und CDN-Blockierungsfehlern beim Generieren des EPC-GiroCodes durch Umstellung auf autarkes `VanillaQR`.
 
 ### Geplant
 - Modellierung von `Geldzuwendung`, `Geldspende` und `Mitgliedsbeitrag`.

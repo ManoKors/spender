@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AD26 White-Label Spenden-Wizard Demo</title>
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <!-- Zero-dependency local QR Code Generator for guaranteed offline & file:// execution -->
+  <script src="vanilla_qr.js"></script>
   <style>
     :root {
       --primary: #059669;
@@ -19,7 +20,7 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background: var(--bg); color: var(--text); padding: 30px 20px; line-height: 1.5; }
-    .container { max-width: 800px; margin: 0 auto; }
+    .container { max-width: 820px; margin: 0 auto; }
 
     /* Club Switcher Bar */
     .mandant-switcher {
@@ -40,6 +41,7 @@
       border: 1px solid var(--border);
       font-weight: 600;
       background: #fff;
+      cursor: pointer;
     }
 
     /* Main Card */
@@ -96,6 +98,25 @@
       font-size: 0.8rem;
     }
 
+    /* Quick Test Bar */
+    .quick-test-bar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 15px;
+    }
+    .btn-quick {
+      background: #e2e8f0;
+      color: #334155;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-quick:hover { background: #cbd5e1; }
+
     /* Amount Buttons */
     .amount-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
     .amount-btn {
@@ -125,7 +146,6 @@
       font-size: 0.95rem;
     }
     .form-row { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
-    .form-row-3 { display: grid; grid-template-columns: 1fr 2fr; gap: 12px; }
 
     /* Checkbox */
     .checkbox-box {
@@ -166,6 +186,17 @@
     }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+    .success-banner {
+      background: var(--primary-light);
+      border: 1px solid var(--primary);
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .success-banner h2 { color: var(--primary); font-size: 1.3rem; margin-bottom: 4px; }
+    .success-banner p { color: var(--text-muted); font-size: 0.9rem; }
+
     .qr-container {
       display: flex;
       gap: 28px;
@@ -176,28 +207,97 @@
       border: 1px solid var(--border);
       margin-bottom: 24px;
     }
+    @media (max-width: 650px) {
+      .qr-container { flex-direction: column; text-align: center; }
+      .qr-data-row strong { width: 100% !important; display: block; margin-bottom: 2px; }
+    }
+
+    .qr-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .girocode-badge {
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: #0f172a;
+      color: #fff;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
     #qrcode {
       background: #fff;
-      padding: 12px;
+      padding: 10px;
       border-radius: 8px;
       border: 1px solid var(--border);
-      min-width: 160px;
-      min-height: 160px;
+      width: 175px;
+      height: 175px;
       display: flex;
       align-items: center;
       justify-content: center;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08);
     }
+    #qrcode svg {
+      width: 155px;
+      height: 155px;
+      display: block;
+    }
+
     .qr-details { flex: 1; }
-    .qr-details h3 { font-size: 1.1rem; margin-bottom: 10px; color: var(--primary); }
-    .qr-data-row { font-size: 0.9rem; margin-bottom: 6px; }
-    .qr-data-row strong { color: var(--text-muted); display: inline-block; width: 140px; }
+    .qr-details h3 { font-size: 1.1rem; margin-bottom: 12px; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+    .qr-data-row {
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .qr-data-row strong { color: var(--text-muted); min-width: 130px; }
     .ref-badge {
       background: #fef08a;
       color: #854d0e;
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-weight: bold;
+      font-size: 0.95rem;
+    }
+    .copy-btn {
+      background: #e2e8f0;
+      color: #334155;
+      border: none;
       padding: 2px 8px;
       border-radius: 4px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.15s;
+    }
+    .copy-btn:hover { background: #cbd5e1; }
+
+    /* Raw EPC Payload Box */
+    .epc-raw-toggle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      text-decoration: underline;
+      margin-top: 8px;
+      display: inline-block;
+    }
+    .epc-raw-box {
+      margin-top: 8px;
+      background: #0f172a;
+      color: #a5f3fc;
+      padding: 10px 14px;
+      border-radius: 6px;
       font-family: monospace;
-      font-weight: bold;
+      font-size: 0.75rem;
+      white-space: pre;
+      display: none;
     }
 
     /* Backoffice Simulation */
@@ -205,28 +305,30 @@
       background: #f1f5f9;
       border: 1px dashed #94a3b8;
       border-radius: 8px;
-      padding: 16px;
-      margin-top: 20px;
+      padding: 18px;
+      margin-top: 24px;
     }
-    .backoffice-box h4 { font-size: 0.95rem; margin-bottom: 8px; }
+    .backoffice-box h4 { font-size: 0.95rem; margin-bottom: 8px; color: #1e293b; }
     .btn-secondary {
       background: #334155;
       color: #fff;
-      padding: 8px 16px;
+      padding: 9px 18px;
       border: none;
       border-radius: 6px;
       font-size: 0.85rem;
       font-weight: 600;
       cursor: pointer;
+      transition: background 0.2s;
     }
     .btn-secondary:hover { background: #1e293b; }
     .audit-log {
       margin-top: 12px;
-      padding: 10px;
+      padding: 12px;
       background: #0f172a;
       color: #38bdf8;
-      font-family: monospace;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       font-size: 0.8rem;
+      line-height: 1.45;
       border-radius: 6px;
       display: none;
       white-space: pre-wrap;
@@ -261,6 +363,10 @@
 
     <!-- Wizard Formular -->
     <div class="wizard-body" id="wizardForm">
+      <div class="quick-test-bar">
+        <button type="button" class="btn-quick" onclick="fillSampleData()">⚡ Test-Daten ausfüllen</button>
+      </div>
+
       <!-- 1. Betrag & Zweck -->
       <div class="step-title"><span class="step-badge">1</span> Spendenbetrag & Förderzweck</div>
       <div class="amount-grid">
@@ -304,25 +410,54 @@
         </label>
       </div>
 
-      <button type="button" class="btn-submit" onclick="submitPledge()">Spende ankündigen & GiroCode generieren →</button>
+      <button type="button" id="btnSubmitPledge" class="btn-submit" onclick="submitPledge()">Spende ankündigen & GiroCode generieren →</button>
     </div>
 
     <!-- 4. Bestätigung & EPC-GiroCode Result -->
     <div class="result-view" id="resultView">
-      <div style="text-align: center; margin-bottom: 20px;">
-        <h2 style="color: var(--primary);">Vielen Dank für Ihre Spendenabsicht!</h2>
-        <p style="color: var(--text-muted);">Scannen Sie den QR-Code einfach mit Ihrer Banking-App (Sparkasse, DKB, ING, Volksbank etc.).</p>
+      <div class="success-banner">
+        <h2>Vielen Dank für Ihre Spendenabsicht!</h2>
+        <p>Scannen Sie den QR-Code einfach mit Ihrer Banking-App (Sparkasse, DKB, ING, Volksbank etc.) oder übernehmen Sie die Überweisungsdaten.</p>
       </div>
 
       <div class="qr-container">
-        <div id="qrcode"></div>
+        <div class="qr-wrapper">
+          <div class="girocode-badge">EPC SEPA GiroCode</div>
+          <div id="qrcode"></div>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">Standard EPC069-08</span>
+        </div>
         <div class="qr-details">
-          <h3>SEPA Überweisungsdaten (EPC-Standard)</h3>
-          <div class="qr-data-row"><strong>Empfänger:</strong> <span id="resReceiver"></span></div>
-          <div class="qr-data-row"><strong>IBAN:</strong> <span id="resIban" style="font-family: monospace;"></span></div>
-          <div class="qr-data-row"><strong>BIC:</strong> <span id="resBic" style="font-family: monospace;"></span></div>
-          <div class="qr-data-row"><strong>Betrag:</strong> <span id="resAmount" style="font-weight: bold; font-size: 1.05rem;"></span></div>
-          <div class="qr-data-row"><strong>Verwendungszweck:</strong> <span class="ref-badge" id="resRef"></span></div>
+          <h3>SEPA Überweisungsdaten</h3>
+          <div class="qr-data-row">
+            <strong>Empfänger:</strong>
+            <span id="resReceiver"></span>
+            <button type="button" class="copy-btn" onclick="copyField('resReceiver', this)">Kopieren</button>
+          </div>
+          <div class="qr-data-row">
+            <strong>IBAN:</strong>
+            <span id="resIban" style="font-family: monospace; font-weight: 600;"></span>
+            <button type="button" class="copy-btn" onclick="copyField('resIban', this)">Kopieren</button>
+          </div>
+          <div class="qr-data-row">
+            <strong>BIC:</strong>
+            <span id="resBic" style="font-family: monospace;"></span>
+            <button type="button" class="copy-btn" onclick="copyField('resBic', this)">Kopieren</button>
+          </div>
+          <div class="qr-data-row">
+            <strong>Betrag:</strong>
+            <span id="resAmount" style="font-weight: bold; font-size: 1.05rem; color: var(--primary);"></span>
+            <button type="button" class="copy-btn" onclick="copyText(selectedAmount.toFixed(2), this)">Kopieren</button>
+          </div>
+          <div class="qr-data-row">
+            <strong>Verwendungszweck:</strong>
+            <span class="ref-badge" id="resRef"></span>
+            <button type="button" class="copy-btn" onclick="copyField('resRef', this)">Kopieren</button>
+          </div>
+
+          <div>
+            <span class="epc-raw-toggle" onclick="toggleEpcPayload()">[+] Rohdaten-Payload anzeigen (EPC069-08)</span>
+            <div class="epc-raw-box" id="epcRawBox"></div>
+          </div>
         </div>
       </div>
 
@@ -332,12 +467,12 @@
         <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">
           Sobald der Betrag auf dem Vereinskonto eingeht, prüft das System automatisch die Gemeinnützigkeit und erzeugt die Bestätigung.
         </p>
-        <button class="btn-secondary" onclick="simulatePaymentReceipt()">Geldeingang verbuchen & Compliance prüfen</button>
+        <button type="button" class="btn-secondary" onclick="simulatePaymentReceipt()">Geldeingang verbuchen & Compliance prüfen</button>
         <div class="audit-log" id="auditLog"></div>
       </div>
 
-      <div style="text-align: center; margin-top: 20px;">
-        <button class="amount-btn" onclick="resetForm()">← Weitere Spende durchführen</button>
+      <div style="text-align: center; margin-top: 24px;">
+        <button type="button" class="amount-btn" onclick="resetForm()">← Weitere Spende durchführen</button>
       </div>
     </div>
   </div>
@@ -380,6 +515,7 @@
   };
 
   let selectedAmount = 50;
+  let currentEpcPayload = "";
 
   function switchMandant() {
     const slug = document.getElementById('slugSelector').value;
@@ -410,6 +546,14 @@
     btn.classList.add('active');
   }
 
+  function fillSampleData() {
+    document.getElementById('donorName').value = "Mano Korsanke";
+    document.getElementById('donorStreet').value = "Universitätsstraße 14";
+    document.getElementById('donorCity').value = "48149 Münster";
+    document.getElementById('donorEmail').value = "spende@example.org";
+    document.getElementById('checkVerzicht').checked = true;
+  }
+
   function submitPledge() {
     if (!document.getElementById('checkVerzicht').checked) {
       alert("Fehler (OCL Invariante 7): Gegenleistungsfreiheit muss zwingend bestätigt werden!");
@@ -426,14 +570,14 @@
     const refCode = `SP-${year}-${rand}`;
 
     // EPC069-08 SEPA-QR Payload formatieren
-    const epcPayload = [
+    currentEpcPayload = [
       "BCD",
       "002",
       "1",
       "SCT",
-      m.bic,
-      m.kontoinhaber,
-      m.iban,
+      m.bic.replace(/\s+/g, '').toUpperCase(),
+      m.kontoinhaber.trim().substring(0, 70),
+      m.iban.replace(/\s+/g, '').toUpperCase(),
       `EUR${selectedAmount.toFixed(2)}`,
       "",
       "",
@@ -446,19 +590,64 @@
     document.getElementById('resBic').textContent = m.bic;
     document.getElementById('resAmount').textContent = `${selectedAmount.toFixed(2)} €`;
     document.getElementById('resRef').textContent = refCode;
+    document.getElementById('epcRawBox').textContent = currentEpcPayload;
 
-    // QR-Code generieren
+    // QR-Code rendern
     const qrDiv = document.getElementById('qrcode');
     qrDiv.innerHTML = '';
-    new QRCode(qrDiv, {
-      text: epcPayload,
-      width: 150,
-      height: 150,
-      correctLevel: QRCode.CorrectLevel.M
-    });
+
+    try {
+      if (typeof VanillaQR !== 'undefined' && VanillaQR.create) {
+        const qr = VanillaQR.create(currentEpcPayload);
+        qrDiv.innerHTML = qr.toSVG(4);
+      } else {
+        // SVG Vector Fallback wenn kein Script geladen
+        qrDiv.innerHTML = renderFallbackGiroBadge(refCode, selectedAmount);
+      }
+    } catch (e) {
+      console.warn("QR Render Hinweis:", e);
+      qrDiv.innerHTML = renderFallbackGiroBadge(refCode, selectedAmount);
+    }
 
     document.getElementById('wizardForm').style.display = 'none';
     document.getElementById('resultView').style.display = 'block';
+  }
+
+  function renderFallbackGiroBadge(ref, amt) {
+    return `
+      <div style="text-align:center; padding:12px; font-size:0.8rem; color:#0f172a;">
+        <div style="font-weight:bold; font-size:1.1rem; color:var(--primary); margin-bottom:4px;">GiroCode</div>
+        <div style="font-family:monospace; background:#e2e8f0; padding:4px 6px; border-radius:4px; font-size:0.75rem;">${ref}</div>
+        <div style="margin-top:6px; font-weight:600;">${amt.toFixed(2)} €</div>
+      </div>
+    `;
+  }
+
+  function toggleEpcPayload() {
+    const box = document.getElementById('epcRawBox');
+    box.style.display = box.style.display === 'block' ? 'none' : 'block';
+  }
+
+  function copyField(elementId, btn) {
+    const text = document.getElementById(elementId).textContent.trim();
+    copyText(text, btn);
+  }
+
+  function copyText(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+      const orig = btn.textContent;
+      btn.textContent = "Kopiert! ✓";
+      btn.style.background = "#10b981";
+      btn.style.color = "#fff";
+      setTimeout(() => {
+        btn.textContent = orig;
+        btn.style.background = "";
+        btn.style.color = "";
+      }, 1500);
+    }).catch(() => {
+      // Fallback
+      prompt("Kopieren:", text);
+    });
   }
 
   function simulatePaymentReceipt() {
@@ -469,8 +658,8 @@
       `[2] Status der Spendenabsicht aktualisiert: ANGEKUENDIGT -> EINGEGANGEN`,
       `[3] Automatische Compliance-Prüfung gestartet:`,
       `    ✓ Freistellungsbescheid des Vereins: GÜLTIG (Frist <= 5 Jahre § 63 Abs. 5 AO)`,
-      `    ✓ Gegenleistungsverzichtserklärung: LIEGT VOR`,
-      `    ✓ Satzungszweck: GESTECKT & BEFREIT`,
+      `    ✓ Gegenleistungsverzichtserklärung: LIEGT VOR (uneigennützige Zuwendung)`,
+      `    ✓ Satzungszweck: GESTECKT & BEFREIT (lt. Satzung hinterlegt)`,
       `    ✓ Betrag: ${selectedAmount.toFixed(2)} € (in Worten formatiert)`,
       `[4] Zuwendungsbestätigung nach amtlichem BMF-Muster 034122 generiert & freigegeben! ✓`
     ].join("\n");
@@ -480,6 +669,7 @@
     document.getElementById('wizardForm').style.display = 'block';
     document.getElementById('resultView').style.display = 'none';
     document.getElementById('auditLog').style.display = 'none';
+    document.getElementById('epcRawBox').style.display = 'none';
   }
 
   // Init

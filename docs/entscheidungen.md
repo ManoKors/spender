@@ -105,3 +105,31 @@ Das System generiert bei jeder Spendenabsicht die standardkonformen Nutzdaten na
   * Keine Bindung an externe Zahlungsdienstleister (keine Gebühren, kein Vendor-Lock-in).
 * **Nachteile:**
   * Überweisung erfolgt asynchron über die Bank des Spenders (Zahlungseingang muss auf dem Vereinskonto bestätigt werden).
+
+---
+
+## ADR 06: Autarke, zero-dependency Client-Side QR-Code-Generierung für den White-Label Spenden-Wizard
+
+* **Status:** Angenommen
+* **Datum:** 2026-10-27
+
+### Kontext
+Beim Rendern des EPC069-08 GiroCodes im Browser-Frontend ([`demo/spenden_wizard.html`](../demo/spenden_wizard.html)) traten bei herkömmlichen Drittanbieter-Bibliotheken (`qrcodejs`) signifikante Probleme auf:
+1. **Laufzeit-Abbrüche:** Gängige Versionen scheiterten bei mehrzeiligen SEPA-Payloads mit Umlauten (`Katzenschutz Münster e. V.`, `Universitätsstraße`) mit einem internen `code length overflow`, wodurch die UI-Zustandsänderung blockiert wurde.
+2. **Datenschutz & Netzwerkausfallsicherheit:** Das Laden von externen CDNs (`cdn.jsdelivr.net`) überträgt Spender-IP-Adressen an Drittanbieter (DSGVO-Risiko) und schlägt fehl, wenn die Anwendung offline, im Intranet oder über das `file:///`-Protokoll betrieben wird.
+
+### Entscheidung
+Wir implementieren eine leichtgewichtige, autarke QR-Code-Engine ([`demo/vanilla_qr.js`](../demo/vanilla_qr.js)) in reinem Vanilla JavaScript ohne externe Abhängigkeiten:
+* **ISO/IEC 18004 Byte-Mode** mit automatischer Versionswahl (Versions 1–10, ausreichend für alle SEPA-Payloads) und Reed-Solomon-Fehlerkorrektur (Level M).
+* **Direktes Vektor-SVG-Rendering:** Der QR-Code wird als skalierbares `<svg>`-Element in den DOM-Knoten injiziert.
+* **Natives UTF-8 Encoding:** Sichere Unterstützung beliebiger deutscher Sonderzeichen in Vereinsnamen und Verwendungszwecken.
+
+### Konsequenzen
+* **Vorteile:**
+  * **100% Offline-fähig:** Funktioniert direkt im Browser, vom lokalen Dateisystem (`file:///`) und in isolierten Vereinsnetzen ohne Internetzugang.
+  * **Datenschutzkonform (DSGVO):** Keine externen Netzwerkanfragen, keine Cookies, keine IP-Übermittlung an CDNs.
+  * **Crisp Rendering:** Skaliert gestochen scharf auf allen Bildschirmauflösungen und Displays von Mobilgeräten.
+  * **Robuste Fehlerbehandlung:** Selbst im Fall eines unerwarteten Fehlers fängt die UI den Fehler ab und bietet manuelle Kopier-Fallbacks.
+* **Nachteile:**
+  * Eine zusätzliche, minimale JavaScript-Komponente (~250 Zeilen) wird im Repository mitgeführt.
+

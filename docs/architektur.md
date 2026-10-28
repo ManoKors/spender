@@ -110,6 +110,19 @@ Das Bescheidwesen ist als `sealed class` modelliert, um den steuerrechtlichen Ra
    * *Fachliche Regel:* Vorläufiger Nachweis der satzungsmäßigen Voraussetzungen (z. B. bei Neugründungen); Gültigkeit höchstens 3 Jahre.
    * *Umsetzung:* Methode `istGueltigAm(datum: LocalDate): Boolean` prüft, ob das Prüfdatum zwischen Feststellungsdatum und Feststellungsdatum + 3 Jahre liegt.
 
+#### Spendenabsicht (`Spendenabsicht`) & EPC-GiroCode
+Die Spendenabsicht modelliert das Spendeversprechen (Pledge) im Statuszyklus:
+1. **Statusübergänge:** `ANGEKUENDIGT` -> `EINGEGANGEN` (durch Bankauszugsabgleich) oder `ABGELAUFEN`.
+2. **Gegenleistungsverzicht:** Invariante OCL 7 erzwingt, dass eine Zuwendung nur als Spende registriert werden darf, wenn der Spender ausdrücklich auf Gegenleistungen verzichtet hat.
+3. **SEPA EPC069-08 Payload:** Der Domain Service `GiroCodeGenerator` baut normgerechte UTF-8-Nutzdaten für SEPA Credit Transfers auf:
+   * Service Tag: `BCD`, Version: `002`, Character Set: `1` (UTF-8), Ident: `SCT`.
+   * BIC, Empfängername (max. 70 Zeichen), bereinigte IBAN, Betrag in EUR (auf 2 Nachkommastellen kaufmännisch gerundet), Verwendungszweck (`SP-YYYY-NNNN`).
+
+#### Client-Side Prototyp & VanillaQR
+Für die interaktive Spenden-Demo ([`demo/spenden_wizard.html`](../demo/spenden_wizard.html)) existiert eine autarke QR-Engine ([`demo/vanilla_qr.js`](../demo/vanilla_qr.js)):
+* Arbeitet ohne externe CDNs oder Abhängigkeiten, vollständig offline und über das lokale `file:///`-Protokoll.
+* Generiert Vektor-SVGs mit Reed-Solomon-Fehlerkorrektur (Level M) und nativer UTF-8-Unterstützung (Umlaute wie in Vereinsnamen oder Straßennamen).
+
 ---
 
 ## 3. Testkonzept und Test-Driven Development (TDD)
@@ -123,3 +136,13 @@ Die steuerrechtlichen Compliance-Regeln erfordern höchste Präzision, da fehler
   * Ungültigkeit am Tag nach Ablauf der Frist.
   * Ungültigkeit für Datumsangaben vor der Bescheidausstellung.
 * **Sprechende Testspezifikation:** Durch Kotlin-Backtick-Namen (`fun \`ist exakt 5 Jahre nach Ausstellung noch gueltig\`()`) dokumentieren die Tests direkt die fachlichen Anforderungen.
+
+### Testübersicht (Stand: 19 Tests, 100% Erfolgsquote)
+
+| Testklasse | Testanzahl | Fachbereich / Abgedeckte Regeln |
+|---|---|---|
+| [`GemeinnuetzigkeitsbescheidTest`](../src/test/kotlin/de/ad26/team07/domain/model/GemeinnuetzigkeitsbescheidTest.kt) | 7 | Fristen nach § 63 Abs. 5 AO (5 Jahre) und § 60a AO (3 Jahre), Vor- und Nachlaufdaten |
+| [`SpendenabsichtTest`](../src/test/kotlin/de/ad26/team07/domain/model/SpendenabsichtTest.kt) | 4 | Betragsvalidierung (> 0 €), Statusübergang `ANGEKUENDIGT` -> `EINGEGANGEN`, Verhinderung doppelter Statusübergänge |
+| [`GiroCodeGeneratorTest`](../src/test/kotlin/de/ad26/team07/domain/service/GiroCodeGeneratorTest.kt) | 4 | EPC069-08 Normkonformität, kaufmännische Rundung, Pflichtfeldvalidierung |
+| [`SpendenabsichtServiceTest`](../src/test/kotlin/de/ad26/team07/application/service/SpendenabsichtServiceTest.kt) | 4 | Inbound-Use-Case Orchestrierung, OCL-Invariante 7 (Gegenleistungsverzicht), Satzungszweck-Validierung, Mandanten-Prüfung |
+

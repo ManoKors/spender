@@ -17,7 +17,7 @@
       --bg: #ffffff;
       --text: #1a1a1a;
       --accent: #2563eb;
-      --diagram-max-width: 1550px;
+      --diagram-max-width: 1650px;
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -40,31 +40,53 @@
     }
     #diagram-container {
       width: 100%;
-      max-width: 1650px;
+      max-width: 1750px;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
-    /* Simple, clean top navigation */
+    /* Tab-based clean top navigation */
     .nav-bar {
-      font-size: 1rem;
-      color: #666;
+      font-size: 0.95rem;
       margin-bottom: 20px;
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 12px;
       user-select: none;
       flex-wrap: wrap;
       justify-content: center;
     }
-    @media (prefers-color-scheme: dark) {
-      .nav-bar { color: #aaa; }
+    .level-tabs {
+      display: inline-flex;
+      background: rgba(128, 128, 128, 0.12);
+      padding: 4px;
+      border-radius: 8px;
+      gap: 4px;
     }
-    .nav-link {
-      color: var(--accent);
-      text-decoration: underline;
-      cursor: pointer;
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text);
+      padding: 7px 16px;
+      border-radius: 6px;
+      font-size: 0.88rem;
       font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .tab-btn:hover {
+      background: rgba(128, 128, 128, 0.2);
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #ffffff;
+    }
+    .nav-hint {
+      font-size: 0.85rem;
+      color: #666;
+    }
+    @media (prefers-color-scheme: dark) {
+      .nav-hint { color: #aaa; }
     }
     .zoom-controls {
       display: inline-flex;
@@ -73,7 +95,6 @@
       background: rgba(128, 128, 128, 0.12);
       padding: 4px 10px;
       border-radius: 8px;
-      margin-left: 12px;
     }
     .zoom-btn {
       background: var(--bg);
@@ -121,12 +142,6 @@
     .hidden {
       display: none !important;
     }
-    .initial-offscreen {
-      position: absolute !important;
-      left: -9999px !important;
-      top: 0 !important;
-      visibility: hidden !important;
-    }
     /* Highlight clickable drill-down nodes */
     .clickable-node {
       cursor: pointer !important;
@@ -167,9 +182,14 @@
   <div id="diagram-container">
     <div id="error-log"></div>
     <div class="nav-bar" id="nav-bar">
-      <span id="nav-status">Modell: <strong>Level 1 (Atomare Gesamtübersicht)</strong></span>
-      <span>•</span>
-      <span id="nav-action">Tipp: Klicke auf <strong>Gemeinnützigkeitsbescheid 🔍</strong> für das Detailmodell</span>
+      <div class="level-tabs">
+        <button class="tab-btn active" id="tab-overview" onclick="showView('overview')">Level 1: Fachdomäne Gesamtübersicht</button>
+        <button class="tab-btn" id="tab-bescheid" onclick="showView('bescheid')">Level 2: Bescheidwesen & Fristen</button>
+        <button class="tab-btn" id="tab-ports" onclick="showView('ports')">Level 3: Hexagonale Architektur (Ports & Adapters)</button>
+      </div>
+
+      <span class="nav-hint" id="nav-hint">🔍 Klicke im Diagramm auf <strong>Gemeinnützigkeitsbescheid</strong> für Level 2</span>
+
       <div class="zoom-controls">
         <button class="zoom-btn" onclick="changeZoom(-0.15)" title="Verkleinern (Zoom −)">−</button>
         <span class="zoom-level" id="zoom-indicator">100%</span>
@@ -194,13 +214,14 @@ namespace Stammdaten {
   }
 
   class Zuwendungsempfaenger["Zuwendungsempfänger (Verein)"] {
-    +String bezeichnung
+    +String name
     +String steuernummer
     +String finanzamt
     +String rechtsform
     +String iban
     +String bic
     +String kontoinhaber
+    +String ibanBereinigt
   }
 
   class WhiteLabelKonfiguration["White-Label-Konfiguration"] {
@@ -232,22 +253,29 @@ namespace SpendenWizard {
     ABGELAUFEN
   }
 
+  class GiroCodeGenerator {
+    &lt;&lt;service&gt;&gt;
+    +generierePayload(bic, name, iban, betrag, zweck) String
+  }
+
   class Spendenabsicht["Spendenabsicht (Pledge)"] {
+    +String id
     +String referenzCode
     +Decimal betrag
-    +Date erstellungsDatum
+    +String waehrung
+    +DateTime erstellungsDatum
     +SpendenabsichtStatus status
     +String giroCodePayload
-    +generiereGiroCode() String
+    +markiereAlsEingegangen() Spendenabsicht
   }
 }
 
 namespace Bescheidwesen {
   class Gemeinnuetzigkeitsbescheid["Gemeinnützigkeitsbescheid 🔍"] {
     &lt;&lt;abstract&gt;&gt;
-    +Date bescheidDatum
-    +String finanzamt
     +String steuernummer
+    +String finanzamt
+    +Date bescheidDatum
     +istGueltigAm(Date datum) Boolean
   }
 }
@@ -268,65 +296,76 @@ namespace TransaktionUndNachweis {
     +Integer beitragsJahr
   }
 
-  class Zuwendungsbestaetigung["Zuwendungsbestätigung"] {
+  class Zuwendungsbestaetigung["Zuwendungsbestätigung (Muster 034122)"] {
     +String bestaetigungsNummer
     +Date ausstellungsDatum
     +String ausstellungsOrt
     +String betragInWorten
     +Boolean keinAusschlussBeitrag
     +String unterschrift
+    +pruefeBescheidGueltigkeit() Boolean
   }
 
   class Gegenleistungsverzichtserklaerung["Verzichtserklärung (Aufwand/Gegenleistung)"] {
     +Date erklaerungsDatum
-    +String verzichtAufAnspruch
     +Boolean istGegenleistungsfrei
+    +String verzichtAufAnspruch
   }
 }
 
-Zuwendungsempfaenger *-- "1" WhiteLabelKonfiguration : branding
+%% Stammdaten Kompositionen
+Zuwendungsempfaenger *-- "1" WhiteLabelKonfiguration : whiteLabelKonfiguration
 Zuwendungsempfaenger *-- "1" Adresse : sitz
 Spender *-- "1" Adresse : anschrift
 
-Zuwendungsempfaenger "1" -- "0..*" Spendenabsicht : hostet_fuer
-Spender "1" -- "0..*" Spendenabsicht : deklariert
-Spendenabsicht "1" --> "1" SteuerbeguenstigterZweck : widmet_fuer
-Spendenabsicht "1" o-- "1" Gegenleistungsverzichtserklaerung : enthaelt
-Spendenabsicht "0..1" --> "0..1" Geldspende : resultiert_in
+%% Vereinszuordnung Satzungszweck & Bescheide
+Zuwendungsempfaenger "1" *-- "1..*" Gemeinnuetzigkeitsbescheid : gemeinnuetzigkeitsbescheide
+Zuwendungsempfaenger "1" --> "1..*" SteuerbeguenstigterZweck : satzungszwecke
+Gemeinnuetzigkeitsbescheid "0..*" --> "1..*" SteuerbeguenstigterZweck : beguenstigt
 
-Spender "1" -- "0..*" Geldzuwendung : leistet
-Zuwendungsempfaenger "1" -- "0..*" Geldzuwendung : empfaengt
+%% Spendenabsicht (Pledge): Exakte Richtungen zum Verein, Spender, Zweck und Status
+Spendenabsicht "0..*" --> "1" Zuwendungsempfaenger : empfaenger
+Spendenabsicht "0..*" --> "1" Spender : spender
+Spendenabsicht "0..*" --> "1" SteuerbeguenstigterZweck : gewidmeterZweck
+Spendenabsicht "0..*" --> "1" SpendenabsichtStatus : status
+Spendenabsicht "1" *-- "1" Gegenleistungsverzichtserklaerung : verzichtserklaerung
+Spendenabsicht ..> GiroCodeGenerator : erzeugtPayloadMit
 
+%% Transaktion & Realisierung
+Geldspende "0..1" --> "0..1" Spendenabsicht : basiert_auf
+Geldzuwendung "0..*" --> "1" Spender : zuwendender
+Geldzuwendung "0..*" --> "1" Zuwendungsempfaenger : empfaenger
+
+%% Spezialisierungen (Generalisierung)
 Geldzuwendung <|-- Geldspende
 Geldzuwendung <|-- Mitgliedsbeitrag
 
+%% Nachweis Aufwandsspende
 Geldspende "1" o-- "0..1" Gegenleistungsverzichtserklaerung : belegt_verzicht
 
+%% Bestätigungsausstellung
 Zuwendungsbestaetigung "0..1" --> "1" Geldzuwendung : bescheinigt
 Zuwendungsbestaetigung "0..*" --> "1" Gemeinnuetzigkeitsbescheid : nennt
 Zuwendungsbestaetigung "0..*" --> "1..*" SteuerbeguenstigterZweck : foerdert
-Gemeinnuetzigkeitsbescheid "0..*" --> "1..*" SteuerbeguenstigterZweck : beguenstigt
-Zuwendungsempfaenger "1" --> "1..*" SteuerbeguenstigterZweck : satzungszweck
-Zuwendungsempfaenger "1" *-- "1..*" Gemeinnuetzigkeitsbescheid : erhaelt
       </pre>
     </div>
 
     <!-- Level 2: Detailmodell Gemeinnützigkeitsbescheid & Fristen -->
-    <div id="wrapper-bescheid" class="diagram-wrapper initial-offscreen">
+    <div id="wrapper-bescheid" class="diagram-wrapper">
       <pre class="mermaid" id="mermaid-bescheid">
 classDiagram
 direction TB
 
-class Zuwendungsempfaenger["Zuwendungsempfänger"] {
-  +String bezeichnung
+class Zuwendungsempfaenger["Zuwendungsempfänger (Verein)"] {
+  +String name
   +String steuernummer
   +String finanzamt
 }
 
 class Gemeinnuetzigkeitsbescheid["Gemeinnützigkeitsbescheid"] {
   &lt;&lt;abstract&gt;&gt;
-  +String finanzamt
   +String steuernummer
+  +String finanzamt
   +Date bescheidDatum
   +istGueltigAm(Date datum) Boolean
 }
@@ -343,7 +382,7 @@ class Feststellungsbescheid {
 }
 note for Feststellungsbescheid "Fristregel Paragraph 60a AO: Maximal 3 Jahre ab Feststellung gueltig"
 
-class SteuerbeguenstigterZweck["Steuerbegünstigter Zweck"] {
+class SteuerbeguenstigterZweck["Steuerbegünstigter Zweck nach 52 AO"] {
   +String paragraf
   +String bezeichnung
 }
@@ -354,13 +393,110 @@ class Zuwendungsbestaetigung["Zuwendungsbestätigung"] {
 }
 note for Zuwendungsbestaetigung "Constraint: Genau ein gueltiger Bescheid zum Ausstellungsdatum"
 
-Zuwendungsempfaenger "1" *-- "1..*" Gemeinnuetzigkeitsbescheid : erhaelt
+Zuwendungsempfaenger "1" *-- "1..*" Gemeinnuetzigkeitsbescheid : gemeinnuetzigkeitsbescheide
 Gemeinnuetzigkeitsbescheid <|-- Freistellungsbescheid
 Gemeinnuetzigkeitsbescheid <|-- Feststellungsbescheid
 Gemeinnuetzigkeitsbescheid "0..*" --> "1..*" SteuerbeguenstigterZweck : beguenstigt
-Zuwendungsempfaenger "1" --> "1..*" SteuerbeguenstigterZweck : satzungszweck
+Zuwendungsempfaenger "1" --> "1..*" SteuerbeguenstigterZweck : satzungszwecke
 Zuwendungsbestaetigung "0..*" --> "1" Gemeinnuetzigkeitsbescheid : nennt
 Zuwendungsbestaetigung "0..*" --> "1..*" SteuerbeguenstigterZweck : foerdert
+      </pre>
+    </div>
+
+    <!-- Level 3: Hexagonale Architektur (Ports & Adapters) -->
+    <div id="wrapper-ports" class="diagram-wrapper">
+      <pre class="mermaid" id="mermaid-ports">
+classDiagram
+direction TB
+
+namespace PrimaryAdapters_Driving {
+  class SpendenWizardWebAdapter["Web-Spenden-Wizard (HTML/JS)"] {
+    +zeigeWizard(slug)
+    +uebermittlePledge(formData)
+  }
+  class MainCliDemo["MainKt (CLI Demo Runner)"] {
+    +main()
+  }
+}
+
+namespace InboundPorts_Driving {
+  class RegistriereSpendenabsichtUseCase {
+    &lt;&lt;interface&gt;&gt;
+    +registriere(command) Spendenabsicht
+  }
+  class RegistriereSpendenabsichtCommand {
+    +String vereinSlug
+    +String zweckParagraf
+    +BigDecimal betrag
+    +String spenderName
+    +Adresse spenderAnschrift
+    +String spenderEmail
+    +Boolean gegenleistungsverzichtBestaetigt
+  }
+}
+
+namespace ApplicationServices {
+  class SpendenabsichtService {
+    -VereinRepositoryPort vereinRepository
+    -SpendenabsichtRepositoryPort spendenabsichtRepository
+    +registriere(command) Spendenabsicht
+    -generiereReferenzCode() String
+  }
+}
+
+namespace OutboundPorts_Driven {
+  class VereinRepositoryPort {
+    &lt;&lt;interface&gt;&gt;
+    +findeNachSlug(slug) Zuwendungsempfaenger
+    +speichere(verein)
+  }
+  class SpendenabsichtRepositoryPort {
+    &lt;&lt;interface&gt;&gt;
+    +speichere(spendenabsicht)
+    +findeNachReferenzCode(referenzCode) Spendenabsicht
+    +findeAlleFuerVerein(vereinSlug) List
+  }
+}
+
+namespace SecondaryAdapters_Driven {
+  class InMemoryVereinRepository {
+    -Map vereine
+    +findeNachSlug(slug) Zuwendungsempfaenger
+    +speichere(verein)
+  }
+  class InMemorySpendenabsichtRepository {
+    -List absichten
+    +speichere(spendenabsicht)
+    +findeNachReferenzCode(referenzCode) Spendenabsicht
+    +findeAlleFuerVerein(vereinSlug) List
+  }
+  class VanillaQREngine["VanillaQR (Client-Side SVG Engine)"] {
+    +create(payload)
+    +toSVG(pixelSize) String
+  }
+}
+
+namespace DomainCore {
+  class Spendenabsicht["Spendenabsicht (Entity)"]
+  class Zuwendungsempfaenger["Zuwendungsempfaenger (Entity)"]
+  class GiroCodeGenerator["GiroCodeGenerator (Domain Service)"]
+}
+
+SpendenWizardWebAdapter ..> RegistriereSpendenabsichtUseCase : ruft_auf
+MainCliDemo ..> RegistriereSpendenabsichtUseCase : ruft_auf
+RegistriereSpendenabsichtUseCase ..> RegistriereSpendenabsichtCommand : verarbeitet
+
+SpendenabsichtService ..|> RegistriereSpendenabsichtUseCase : implements
+
+SpendenabsichtService --> VereinRepositoryPort : vereinRepository
+SpendenabsichtService --> SpendenabsichtRepositoryPort : spendenabsichtRepository
+SpendenabsichtService ..> Spendenabsicht : erzeugt_und_orchestriert
+SpendenabsichtService ..> Zuwendungsempfaenger : liest_verein
+Spendenabsicht ..> GiroCodeGenerator : erzeugtPayloadMit
+
+InMemoryVereinRepository ..|> VereinRepositoryPort : implements
+InMemorySpendenabsichtRepository ..|> SpendenabsichtRepositoryPort : implements
+SpendenWizardWebAdapter ..> VanillaQREngine : rendertSVG
       </pre>
     </div>
   </div>
@@ -373,7 +509,8 @@ Zuwendungsbestaetigung "0..*" --> "1..*" SteuerbeguenstigterZweck : foerdert
         const errLog = document.getElementById('error-log');
         if (errLog) {
           errLog.style.display = 'block';
-          errLog.textContent = 'Mermaid Parse Error: ' + err;
+          const msg = (typeof err === 'object') ? (err.message || err.str || JSON.stringify(err)) : String(err);
+          errLog.textContent = 'Mermaid Parse Error: ' + msg;
         }
         console.error('Mermaid Parse Error:', err, hash);
       };
@@ -388,23 +525,35 @@ Zuwendungsbestaetigung "0..*" --> "1..*" SteuerbeguenstigterZweck : foerdert
     function showView(view, updateHash = true) {
       const overviewWrap = document.getElementById('wrapper-overview');
       const bescheidWrap = document.getElementById('wrapper-bescheid');
-      const navStatus = document.getElementById('nav-status');
-      const navAction = document.getElementById('nav-action');
+      const portsWrap = document.getElementById('wrapper-ports');
+
+      const tabOverview = document.getElementById('tab-overview');
+      const tabBescheid = document.getElementById('tab-bescheid');
+      const tabPorts = document.getElementById('tab-ports');
+      const navHint = document.getElementById('nav-hint');
+
+      // Reset tabs and wrappers
+      [tabOverview, tabBescheid, tabPorts].forEach(t => t.classList.remove('active'));
+      [overviewWrap, bescheidWrap, portsWrap].forEach(w => w.classList.add('hidden'));
 
       if (view === 'bescheid') {
-        overviewWrap.classList.add('hidden');
         bescheidWrap.classList.remove('hidden');
-        bescheidWrap.classList.remove('initial-offscreen');
-        navStatus.innerHTML = 'Modell: <strong>Level 2 (Detail: Gemeinnützigkeitsbescheid & Fristen)</strong>';
-        navAction.innerHTML = '<span class="nav-link" onclick="showView(\'overview\')">← Zurück zur Gesamtübersicht</span>';
+        tabBescheid.classList.add('active');
+        navHint.innerHTML = '← Detailansicht der Bescheide & Fristen nach § 63 Abs. 5 AO und § 60a AO';
         if (updateHash && window.location.hash !== '#bescheid') {
           history.pushState(null, '', '#bescheid');
         }
+      } else if (view === 'ports') {
+        portsWrap.classList.remove('hidden');
+        tabPorts.classList.add('active');
+        navHint.innerHTML = '🏛️ Hexagonale Architektur: Driving & Driven Ports mit Use Case & Adaptern';
+        if (updateHash && window.location.hash !== '#ports') {
+          history.pushState(null, '', '#ports');
+        }
       } else {
-        bescheidWrap.classList.add('hidden');
         overviewWrap.classList.remove('hidden');
-        navStatus.innerHTML = 'Modell: <strong>Level 1 (Atomare Gesamtübersicht)</strong>';
-        navAction.innerHTML = 'Tipp: Klicke auf <strong>Gemeinnützigkeitsbescheid 🔍</strong> für das Detailmodell';
+        tabOverview.classList.add('active');
+        navHint.innerHTML = '🔍 Klicke im Diagramm auf <strong>Gemeinnützigkeitsbescheid</strong> für Level 2';
         if (updateHash && window.location.hash !== '' && window.location.hash !== '#overview') {
           history.pushState(null, '', '#overview');
         }
@@ -415,18 +564,19 @@ Zuwendungsbestaetigung "0..*" --> "1..*" SteuerbeguenstigterZweck : foerdert
 
     // Handle browser back/forward buttons
     window.addEventListener('popstate', () => {
-      showView(window.location.hash === '#bescheid' ? 'bescheid' : 'overview', false);
+      const hash = window.location.hash.replace('#', '');
+      showView(hash === 'bescheid' ? 'bescheid' : (hash === 'ports' ? 'ports' : 'overview'), false);
     });
 
     let currentZoom = 1.0;
-    const baseMaxWidth = 1550;
+    const baseMaxWidth = 1650;
 
     function updateZoom() {
       const newWidth = Math.round(baseMaxWidth * currentZoom);
       document.documentElement.style.setProperty('--diagram-max-width', newWidth + 'px');
       const container = document.getElementById('diagram-container');
       if (container) {
-        container.style.maxWidth = Math.max(1650, newWidth + 80) + 'px';
+        container.style.maxWidth = Math.max(1750, newWidth + 80) + 'px';
       }
       const indicator = document.getElementById('zoom-indicator');
       if (indicator) {
@@ -447,57 +597,33 @@ Zuwendungsbestaetigung "0..*" --> "1..*" SteuerbeguenstigterZweck : foerdert
     window.changeZoom = changeZoom;
     window.resetZoom = resetZoom;
 
-    // After Mermaid has rendered the SVGs: attach click listeners to the SVG nodes
-    function setupInteractions() {
-      // Switch Level 2 to hidden once rendering is complete
-      const bescheidWrap = document.getElementById('wrapper-bescheid');
-      if (bescheidWrap && bescheidWrap.classList.contains('initial-offscreen')) {
-        bescheidWrap.classList.remove('initial-offscreen');
-        bescheidWrap.classList.add('hidden');
-      }
+    // Mermaid renders elements that exist in the DOM on load.
+    // Once rendered, we hide the non-active ones.
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        // Initial view according to hash
+        const hash = window.location.hash.replace('#', '');
+        showView(hash === 'bescheid' ? 'bescheid' : (hash === 'ports' ? 'ports' : 'overview'), false);
 
-      // Attach click to Bescheid in Level 1
-      const overviewSvg = document.querySelector('#wrapper-overview svg');
-      if (overviewSvg) {
-        const nodes = overviewSvg.querySelectorAll('g.node');
-        nodes.forEach(node => {
-          const txt = node.textContent || '';
-          const id = node.id || '';
-          if (txt.includes('Gemeinnützigkeitsbescheid') || txt.includes('Gemeinnuetzigkeitsbescheid') || id.includes('Bescheid') || id.includes('Gemeinnuetzigkeitsbescheid')) {
-            node.classList.add('clickable-node');
-            node.setAttribute('title', 'Klicken für Drill-Down in das Bescheid-Detailmodell');
-            node.addEventListener('click', () => showView('bescheid'));
-          }
-        });
-      }
-
-      // Attach click to Zuwendungsempfänger in Level 2
-      const bescheidSvg = document.querySelector('#wrapper-bescheid svg');
-      if (bescheidSvg) {
-        const nodes = bescheidSvg.querySelectorAll('g.node');
-        nodes.forEach(node => {
-          const txt = node.textContent || '';
-          const id = node.id || '';
-          if (txt.includes('Zuwendungsempfänger') || txt.includes('Zuwendungsempfaenger') || id.includes('Zuwendungsempfaenger')) {
-            node.classList.add('clickable-node');
-            node.setAttribute('title', 'Klicken: Zurück zur Gesamtübersicht');
-            node.addEventListener('click', () => showView('overview'));
-          }
-        });
-      }
-
-      // Check initial hash
-      if (window.location.hash === '#bescheid') {
-        showView('bescheid', false);
-      }
-    }
-
-    // Run setup after DOM and Mermaid are fully ready
-    if (document.readyState === 'complete') {
-      setTimeout(setupInteractions, 100);
-    } else {
-      window.addEventListener('load', () => setTimeout(setupInteractions, 150));
-    }
+        // Attach click listeners to the SVG nodes for drill-down
+        const svgOverview = document.querySelector('#mermaid-overview svg');
+        if (svgOverview) {
+          const classNodes = svgOverview.querySelectorAll('g.classGroup, g.node');
+          classNodes.forEach(node => {
+            const textContent = node.textContent || '';
+            if (textContent.includes('Gemeinnützigkeitsbescheid') || textContent.includes('Gemeinnuetzigkeitsbescheid')) {
+              node.classList.add('clickable-node');
+              node.setAttribute('title', 'Klicken für Level 2 (Detailmodell Gemeinnützigkeitsbescheid & Fristen)');
+              node.addEventListener('click', (e) => {
+                e.preventDefault();
+                showView('bescheid');
+              });
+            }
+          });
+        }
+      }, 300);
+    });
   </script>
+
 </body>
 </html>

@@ -37,26 +37,27 @@ namespace Stammdaten {
     +iban: String
     +bic: String
     +kontoinhaber: String
+    +ibanBereinigt: String
   }
 
   class WhiteLabelKonfiguration["White-Label-Konfiguration"] {
     +slug: String
     +wizardTitel: String
     +logoUrl: String
-    +primaerFarbe: String
+    +primaerFarbe: String = "#2563eb"
     +dankesNachricht: String
   }
 
   class Spender["Zuwendender (Spender)"] {
     +name: String
-    +spenderArt: String
+    +spenderArt: String = "natürliche Person"
     +email: String
   }
 
   class SteuerbeguenstigterZweck["Steuerbegünstigter Zweck (§ 52 AO)"] {
     +paragraf: String
     +bezeichnung: String
-    +istAusschlussZweck: Boolean
+    +istAusschlussZweck: Boolean = false
   }
 }
 
@@ -68,23 +69,30 @@ namespace SpendenWizard {
     ABGELAUFEN
   }
 
+  class GiroCodeGenerator {
+    <<service>>
+    +generierePayload(bic: String, name: String, iban: String, betrag: Decimal, zweck: String) String
+  }
+
   class Spendenabsicht["Spendenabsicht (Pledge)"] {
+    +id: String
     +referenzCode: String
     +betrag: Decimal
+    +waehrung: String = "EUR"
     +erstellungsDatum: DateTime
     +status: SpendenabsichtStatus
     +giroCodePayload: String
-    +generiereGiroCode(): String
+    +markiereAlsEingegangen() Spendenabsicht
   }
 }
 
 namespace Bescheidwesen {
   class Gemeinnuetzigkeitsbescheid["Gemeinnützigkeitsbescheid 🔍"] {
     <<abstract>>
-    +bescheidDatum: Date
-    +finanzamt: String
     +steuernummer: String
-    +istGueltigAm(datum: Date): Boolean*
+    +finanzamt: String
+    +bescheidDatum: Date
+    +istGueltigAm(datum: Date) Boolean*
   }
 }
 
@@ -97,7 +105,7 @@ namespace TransaktionUndNachweis {
   }
 
   class Geldspende {
-    +istAufwandsspende: Boolean
+    +istAufwandsspende: Boolean = false
   }
 
   class Mitgliedsbeitrag {
@@ -111,39 +119,50 @@ namespace TransaktionUndNachweis {
     +betragInWorten: String
     +hinweisKeinAusschlussBeitrag: Boolean
     +unterschrift: String
+    +pruefeBescheidGueltigkeit() Boolean
   }
 
   class Gegenleistungsverzichtserklaerung["Verzichtserklärung (Aufwand/Gegenleistung)"] {
     +erklaerungsDatum: Date
-    +verzichtAufAnspruch: String
     +istGegenleistungsfrei: Boolean = true
+    +verzichtAufAnspruch: String
   }
 }
 
-Zuwendungsempfaenger *-- "1" WhiteLabelKonfiguration : branding
+%% Stammdaten Kompositionen
+Zuwendungsempfaenger *-- "1" WhiteLabelKonfiguration : whiteLabelKonfiguration
 Zuwendungsempfaenger *-- "1" Adresse : sitz
-Spender *-- "1" Adresse : postanschrift
+Spender *-- "1" Adresse : anschrift
 
-Zuwendungsempfaenger "1" -- "0..*" Spendenabsicht : hostet_fuer
-Spender "1" -- "0..*" Spendenabsicht : deklariert
-Spendenabsicht "1" --> "1" SteuerbeguenstigterZweck : widmet_fuer
-Spendenabsicht "1" o-- "1" Gegenleistungsverzichtserklaerung : enthaelt
-Spendenabsicht "0..1" --> "0..1" Geldspende : resultiert_in
+%% Vereinszuordnung Satzungszweck & Bescheide
+Zuwendungsempfaenger "1" *-- "1..*" Gemeinnuetzigkeitsbescheid : gemeinnuetzigkeitsbescheide
+Zuwendungsempfaenger "1" --> "1..*" SteuerbeguenstigterZweck : satzungszwecke
+Gemeinnuetzigkeitsbescheid "0..*" --> "1..*" SteuerbeguenstigterZweck : beguenstigt
 
-Spender "1" -- "0..*" Geldzuwendung : leistet
-Zuwendungsempfaenger "1" -- "0..*" Geldzuwendung : empfängt
+%% Spendenabsicht (Pledge): Navigierbarkeit zum Verein, Spender, Zweck und Status
+Spendenabsicht "0..*" --> "1" Zuwendungsempfaenger : empfaenger
+Spendenabsicht "0..*" --> "1" Spender : spender
+Spendenabsicht "0..*" --> "1" SteuerbeguenstigterZweck : gewidmeterZweck
+Spendenabsicht "0..*" --> "1" SpendenabsichtStatus : status
+Spendenabsicht "1" *-- "1" Gegenleistungsverzichtserklaerung : verzichtserklaerung
+Spendenabsicht ..> GiroCodeGenerator : erzeugtPayloadMit
 
+%% Transaktion & Realisierung
+Geldspende "0..1" --> "0..1" Spendenabsicht : basiert_auf
+Geldzuwendung "0..*" --> "1" Spender : zuwendender
+Geldzuwendung "0..*" --> "1" Zuwendungsempfaenger : empfaenger
+
+%% Spezialisierungen (Generalisierung)
 Geldzuwendung <|-- Geldspende
 Geldzuwendung <|-- Mitgliedsbeitrag
 
-Geldspende "1" o-- "0..1" Gegenleistungsverzichtserklaerung : nachweis
+%% Nachweis Aufwandsspende
+Geldspende "1" o-- "0..1" Gegenleistungsverzichtserklaerung : belegt_verzicht
 
+%% Bestätigungsausstellung
 Zuwendungsbestaetigung "0..1" --> "1" Geldzuwendung : bescheinigt
 Zuwendungsbestaetigung "0..*" --> "1" Gemeinnuetzigkeitsbescheid : nennt
 Zuwendungsbestaetigung "0..*" --> "1..*" SteuerbeguenstigterZweck : foerdert
-Gemeinnuetzigkeitsbescheid "0..*" --> "1..*" SteuerbeguenstigterZweck : beguenstigt
-Zuwendungsempfaenger "1" --> "1..*" SteuerbeguenstigterZweck : lautSatzung
-Zuwendungsempfaenger "1" *-- "1..*" Gemeinnuetzigkeitsbescheid : erhaelt
 ```
 
 ---
@@ -197,31 +216,135 @@ class Zuwendungsbestaetigung["Zuwendungsbestätigung"] {
 }
 note for Zuwendungsbestaetigung "Constraint {Entweder-Oder}:\nGenau ein gültiger Bescheid (Freistellung ODER Feststellung)\nmuss zum Ausstellungsdatum der Bestätigung gültig sein."
 
-Zuwendungsempfaenger "1" *-- "1..*" Gemeinnuetzigkeitsbescheid : erhaelt
+Zuwendungsempfaenger "1" *-- "1..*" Gemeinnuetzigkeitsbescheid : gemeinnuetzigkeitsbescheide
 Gemeinnuetzigkeitsbescheid <|-- Freistellungsbescheid
 Gemeinnuetzigkeitsbescheid <|-- Feststellungsbescheid
 Gemeinnuetzigkeitsbescheid "0..*" --> "1..*" SteuerbeguenstigterZweck : beguenstigt
-Zuwendungsempfaenger "1" --> "1..*" SteuerbeguenstigterZweck : lautSatzung
+Zuwendungsempfaenger "1" --> "1..*" SteuerbeguenstigterZweck : satzungszwecke
 Zuwendungsbestaetigung "0..*" --> "1" Gemeinnuetzigkeitsbescheid : nennt
 Zuwendungsbestaetigung "0..*" --> "1..*" SteuerbeguenstigterZweck : foerdert
 ```
 
 ---
 
-## 3. Fachliche Invarianten & OCL-Constraints
+## Level 3: Hexagonale Architektur (Ports & Adapters)
+
+Das nachfolgende Klassendiagramm spezifiziert die lose Kopplung und Abhängigkeitsrichtung der Anwendungsschichten gemäß Hexagonal Architecture (Alistair Cockburn). Abhängigkeiten zeigen ausnahmslos von den äußeren Adaptern nach innen zu den Ports und dem Domänenkern:
+
+```mermaid
+classDiagram
+direction TB
+
+namespace PrimaryAdapters_Driving {
+  class SpendenWizardWebAdapter["Web-Spenden-Wizard (HTML/JS)"] {
+    +zeigeWizard(slug: String)
+    +uebermittlePledge(formData)
+  }
+  class MainCliDemo["MainKt (CLI Demo Runner)"] {
+    +main()
+  }
+}
+
+namespace InboundPorts_Driving {
+  class RegistriereSpendenabsichtUseCase {
+    <<interface>>
+    +registriere(command: RegistriereSpendenabsichtCommand) Spendenabsicht
+  }
+  class RegistriereSpendenabsichtCommand {
+    +String vereinSlug
+    +String zweckParagraf
+    +BigDecimal betrag
+    +String spenderName
+    +Adresse spenderAnschrift
+    +String spenderEmail
+    +Boolean gegenleistungsverzichtBestaetigt
+  }
+}
+
+namespace ApplicationServices {
+  class SpendenabsichtService {
+    -VereinRepositoryPort vereinRepository
+    -SpendenabsichtRepositoryPort spendenabsichtRepository
+    +registriere(command: RegistriereSpendenabsichtCommand) Spendenabsicht
+    -generiereReferenzCode() String
+  }
+}
+
+namespace OutboundPorts_Driven {
+  class VereinRepositoryPort {
+    <<interface>>
+    +findeNachSlug(slug: String) Zuwendungsempfaenger?
+    +speichere(verein: Zuwendungsempfaenger)
+  }
+  class SpendenabsichtRepositoryPort {
+    <<interface>>
+    +speichere(spendenabsicht: Spendenabsicht)
+    +findeNachReferenzCode(referenzCode: String) Spendenabsicht?
+    +findeAlleFuerVerein(vereinSlug: String) List~Spendenabsicht~
+  }
+}
+
+namespace SecondaryAdapters_Driven {
+  class InMemoryVereinRepository {
+    -Map vereine
+    +findeNachSlug(slug: String) Zuwendungsempfaenger?
+    +speichere(verein: Zuwendungsempfaenger)
+  }
+  class InMemorySpendenabsichtRepository {
+    -List absichten
+    +speichere(spendenabsicht: Spendenabsicht)
+    +findeNachReferenzCode(referenzCode: String) Spendenabsicht?
+    +findeAlleFuerVerein(vereinSlug: String) List~Spendenabsicht~
+  }
+  class VanillaQREngine["VanillaQR (Client-Side SVG Engine)"] {
+    +create(payload: String)
+    +toSVG(pixelSize: Int) String
+  }
+}
+
+namespace DomainCore {
+  class Spendenabsicht["Spendenabsicht (Entity)"]
+  class Zuwendungsempfaenger["Zuwendungsempfaenger (Entity)"]
+  class GiroCodeGenerator["GiroCodeGenerator (Domain Service)"]
+}
+
+%% Driving Adapter rufen Driving Ports auf
+SpendenWizardWebAdapter ..> RegistriereSpendenabsichtUseCase : ruft_auf
+MainCliDemo ..> RegistriereSpendenabsichtUseCase : ruft_auf
+RegistriereSpendenabsichtUseCase ..> RegistriereSpendenabsichtCommand : verarbeitet
+
+%% Application Service implementiert Inbound Port
+SpendenabsichtService ..|> RegistriereSpendenabsichtUseCase : implements
+
+%% Application Service nutzt Outbound Ports und Domain
+SpendenabsichtService --> VereinRepositoryPort : vereinRepository
+SpendenabsichtService --> SpendenabsichtRepositoryPort : spendenabsichtRepository
+SpendenabsichtService ..> Spendenabsicht : erzeugt_und_orchestriert
+SpendenabsichtService ..> Zuwendungsempfaenger : liest_verein
+Spendenabsicht ..> GiroCodeGenerator : erzeugtPayloadMit
+
+%% Secondary Adapter implementieren Outbound Ports
+InMemoryVereinRepository ..|> VereinRepositoryPort : implements
+InMemorySpendenabsichtRepository ..|> SpendenabsichtRepositoryPort : implements
+SpendenWizardWebAdapter ..> VanillaQREngine : rendertSVG
+```
+
+---
+
+## 4. Fachliche Invarianten & OCL-Constraints
 
 Die nachfolgenden formalen Integritätsbedingungen sichern die steuerrechtliche Compliance:
 
 1. **Gültigkeit des Freistellungsbescheids (§ 63 Abs. 5 AO):**
    ```ocl
    context Freistellungsbescheid::istGueltigAm(datum: Date): Boolean
-   body: datum <= self.bescheidDatum.addYears(5)
+   body: !datum.isBefore(self.bescheidDatum) and datum <= self.bescheidDatum.addYears(5)
    ```
 
 2. **Gültigkeit des Feststellungsbescheids (§ 60a AO):**
    ```ocl
    context Feststellungsbescheid::istGueltigAm(datum: Date): Boolean
-   body: datum <= self.bescheidDatum.addYears(3)
+   body: !datum.isBefore(self.bescheidDatum) and datum <= self.bescheidDatum.addYears(3)
    ```
 
 3. **Gültiger Bescheid bei Ausstellung:**
@@ -238,7 +361,7 @@ Die nachfolgenden formalen Integritätsbedingungen sichern die steuerrechtliche 
    inv ZweckUebereinstimmung:
      self.steuerbeguenstigterZweck->forAll(z |
        self.gemeinnuetzigkeitsbescheid.steuerbeguenstigterZweck->includes(z) and
-       self.geldzuwendung.zuwendungsempfaenger.steuerbeguenstigterZweck->includes(z)
+       self.geldzuwendung.zuwendungsempfaenger.satzungszwecke->includes(z)
      )
    ```
 
@@ -263,8 +386,8 @@ Die nachfolgenden formalen Integritätsbedingungen sichern die steuerrechtliche 
    ```ocl
    context Spendenabsicht
    inv VerzichtErklaert:
-     self.gegenleistungsverzichtserklaerung->notEmpty() and
-     self.gegenleistungsverzichtserklaerung.istGegenleistungsfrei = true
+     self.verzichtserklaerung->notEmpty() and
+     self.verzichtserklaerung.istGegenleistungsfrei = true
    ```
 
 8. **Konsistenz bei Realisierung der Spende:**
@@ -274,6 +397,7 @@ Die nachfolgenden formalen Integritätsbedingungen sichern die steuerrechtliche 
    inv AbsichtUebereinstimmung:
      self.spendenabsicht->notEmpty() implies
        (self.betrag = self.spendenabsicht.betrag and
-        self.zuwendungsempfaenger = self.spendenabsicht.zuwendungsempfaenger and
+        self.zuwendungsempfaenger = self.spendenabsicht.empfaenger and
         self.spendenabsicht.status = SpendenabsichtStatus::EINGEGANGEN)
    ```
+

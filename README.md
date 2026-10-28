@@ -25,24 +25,32 @@ Automatisierung der steuerrechtlichen Compliance und Belegprüfung für Geld- un
 * [Changelog](CHANGELOG.md) – Meilensteine und Release-Historie nach Keep a Changelog.
 
 ### Demos & Prototypen
-* [Interaktiver White-Label Spenden-Wizard](demo/spenden_wizard.html) – Voll funktionsfähiger Web-Wizard mit Mandanten-Umschaltung, Gegenleistungsverzicht und echtem EPC-GiroCode (QR-Code zum Scannen mit Banking-Apps).
+* [Interaktiver White-Label Spenden-Wizard](demo/spenden_wizard.html) – Voll funktionsfähiger Web-Wizard mit Mandanten-Umschaltung, Gegenleistungsverzicht, autarkem EPC-GiroCode Vektor-SVG (QR-Code zum Scannen mit Banking-Apps) und Kassenwart-Backoffice-Simulation.
 * [Interaktives Datenmodell](fachdomäne/fachdomäneVerein/datenmodell_zuwendungsbestaetigung_034122.html) – Visuelle Darstellung der Modellstufen (Level 1 & Level 2).
 
 ## Setup und Start
 
-Das Projekt verwendet **Kotlin** mit **Gradle** (Kotlin DSL) und **Java 21**.
+Das Projekt verwendet **Kotlin 2.1** mit **Gradle** (Kotlin DSL) und **Java 21 (LTS)**.
 
-### Interaktive Demo ausführen
+### 1. Web-Wizard im Browser öffnen (Demo)
+Die Demo läuft 100% autark und ohne Webserver oder Internetzugang:
+```bash
+open demo/spenden_wizard.html
+```
+
+### 2. Konsolen-Demo ausführen (MainKt)
+Demonstriert die Use-Case-Orchestrierung von der Spendenabsicht über den EPC-GiroCode bis zur automatisierten Bescheidprüfung:
 ```bash
 ./gradlew run
 ```
 
-### Tests ausführen
+### 3. Automatisierte Tests ausführen (19 Tests)
+Führt alle Domain-, Service- und Compliance-Tests aus:
 ```bash
 ./gradlew test
 ```
 
-### Projekt bauen
+### 4. Gesamtes Projekt bauen
 ```bash
 ./gradlew build
 ```

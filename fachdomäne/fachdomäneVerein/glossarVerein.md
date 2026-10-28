@@ -58,10 +58,19 @@ Dieses Objekt steht **nicht auf dem Formular**. Das amtliche Muster verlangt kei
 
 | Geschäftsobjekt | Attribut | Definition |
 |---|---|---|
-| **Gegenleistungsverzichtserklärung** | | Erklärung des Zuwendenden, dass er für seine Zahlung keine Gegenleistung erhält und auch keine erwartet (keine Ware, keine Dienstleistung, keine Werbeleistung). Sie ist Voraussetzung dafür, dass der Verein die Zuwendungsbestätigung ausstellen darf. |
+| **Gegenleistungsverzichtserklärung** | | Erklärung des Zuwendenden, dass er für seine Zahlung keine Gegenleistung erhält und auch keine erwartet (keine Ware, keine Dienstleistung, keine Werbeleistung). Sie ist Voraussetzung dafür, dass der Verein die Zuwendungsbestätigung ausstellen darf (OCL 7). |
 | | Erklärender | Der Zuwendende, der die Erklärung abgibt. |
-| | Erklärungsdatum | Tag der Erklärung. Sie sollte vor der Ausstellung der Bestätigung vorliegen. |
-| | Betroffene Geldzuwendung | Die Zahlung, auf die sich die Erklärung bezieht. |
+| | Erklärungsdatum | Tag der Erklärung. Sie muss vor der Erfassung der Spendenabsicht bzw. der Ausstellung der Bestätigung vorliegen. |
+| | Betroffene Geldzuwendung | Die Zahlung bzw. Spendenabsicht, auf die sich die Erklärung bezieht. |
+| **Spendenabsicht** (Synonym: Pledge) | | Verbindliches Spendeversprechen, das ein Zuwendender im White-Label-Wizard vorab registriert. Sie verknüpft Spender, Zweck, Betrag und Verzichtserklärung mit einem eindeutigen Referenzcode. |
+| | Referenzcode | Eindeutige Kennung (z. B. `SP-2026-4821`), die im Verwendungszweck der Überweisung angegeben wird, um Geldeingänge automatisiert zuzuordnen. |
+| | Status | Status im Lebenszyklus: `ANGEKUENDIGT` (Wizard abgeschlossen), `EINGEGANGEN` (Überweisung gebucht) oder `ABGELAUFEN`. |
+| | GiroCode-Payload | Normierter Zeichensatz nach EPC069-08 für den SEPA-QR-Code. |
+| **EPC-GiroCode** | | Standardisierter QR-Code für den europäischen Zahlungsverkehr (European Payments Council Quick Response Code). Ermöglicht das fehlerfreie Scannen aller Zahlungsdaten (Empfänger, IBAN, BIC, Betrag, Referenzcode) direkt in Banking-Apps. |
+| **White-Label-Konfiguration** | | Mandantenspezifische Darstellungseinstellungen, mit denen der Spenden-Wizard nahtlos im Corporate Design des jeweiligen Vereins erscheint. |
+| | Slug | Eindeutiger URL-Pfadbestandteil des Vereins (z. B. `katzenschutz-ms`). |
+| | Primärfarbe | CI-Hauptfarbe für Buttons, Icons und Hervorhebungen im Wizard. |
+| | Wizard-Titel / Dankestext | Individuelle Ansprache und Bestätigungsmeldung für die Spender. |
 
 ---
 
