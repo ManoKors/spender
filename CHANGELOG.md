@@ -79,12 +79,17 @@ und dieses Projekt hält sich an [Semantic Versioning](https://semver.org/lang/d
   - `.gitignore` korrigiert (`/out/` statt `out/`), wodurch das Application-Package `de.ad26.team07.application.port.out` nicht mehr fälschlicherweise als Compiler-Ausgabeverzeichnis ignoriert wird.
 - **QR-Code-Generierung im Demo-Wizard:**
   - Behebung von `code length overflow`- und CDN-Blockierungsfehlern beim Generieren des EPC-GiroCodes durch Umstellung auf autarkes `VanillaQR`.
+- **Interaktiver Zuwendungsbestätigungs-Viewer im Spenden-Wizard:**
+  - Behebung des Anzeige-Fehlers beim Klick auf *„Amtliche Zuwendungsbestätigung (Muster 034122) anzeigen & drucken“* in [`demo/spenden_wizard.html`](demo/spenden_wizard.html):
+    - Ergänzung der fehlenden CSS-Aktivierungsregel `.modal-backdrop.active { display: flex !important; }`.
+    - Absicherung der Datenversorgung via `ensurePledgeData()` mit Fallback-Initialisierung gegen `undefined`/`null`-Abbrüche.
+    - Direkte Umschaltung von `style.display` (`flex`/`none`) und Hinzufügen von Backdrop-Click- und `ESC`-Schließ-Handlern.
+    - Einführung der dedizierten Button-Klasse `.btn-receipt-action` für zuverlässige und barrierefreie Interaktion.
 
 ### Geplant
-- Modellierung von `Geldzuwendung`, `Geldspende` und `Mitgliedsbeitrag`.
-- Prüfung der Aufwandsspende-Bedingung (`Gegenleistungsverzichtserklaerung`).
-- Implementierung der Zweckkongruenz-Prüfung zwischen Satzung, Bescheid und Bestätigung.
-- Validierung der 300 €-Grenze für den vereinfachten Zuwendungsnachweis.
+- Direkter PDF/A-3-Export der Zuwendungsbestätigung per Headless-Rendering oder OpenPDF/iText.
+- Automatisierter E-Mail-Versand-Adapter für Spendenquittungen nach Buchungseingang.
+- FinTS / XS2A Open-Banking Anbindung zur automatisierten Zuordnung von Bank-Kontoauszügen mit Spendenabsicht-Referenzcodes.
 
 ---
 

@@ -347,6 +347,30 @@
       padding: 16px;
       overflow-y: auto;
     }
+    .modal-backdrop.active {
+      display: flex !important;
+    }
+    .btn-receipt-action {
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      width: 100%;
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px -1px rgba(37,99,235,0.25);
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn-receipt-action:hover {
+      background: #1d4ed8;
+      transform: translateY(-1px);
+    }
     .modal-content {
       background: #ffffff;
       border-radius: 12px;
@@ -656,7 +680,7 @@
         <div class="audit-log" id="auditLog"></div>
 
         <div id="receiptActionBox" style="display:none; margin-top: 14px;">
-          <button type="button" class="btn" style="background: #2563eb; width: 100%; font-size: 0.95rem; padding: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 6px -1px rgba(37,99,235,0.25);" onclick="openReceiptModal()">
+          <button type="button" class="btn-receipt-action" onclick="openReceiptModal()">
             📄 Amtliche Zuwendungsbestätigung (Muster 034122) anzeigen & drucken
           </button>
         </div>
@@ -950,9 +974,34 @@
     document.getElementById('receiptActionBox').style.display = 'block';
   }
 
+  function ensurePledgeData() {
+    if (!lastPledge) {
+      const slug = document.getElementById('slugSelector').value;
+      const m = mandanten[slug];
+      const year = new Date().getFullYear();
+      const rand = Math.floor(1000 + Math.random() * 9000);
+      const now = new Date();
+      const todayStr = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
+      const donor = (document.getElementById('donorName') && document.getElementById('donorName').value.trim()) || "Mano Korsanke";
+
+      lastPledge = {
+        mandant: m,
+        amount: selectedAmount || 50,
+        donorName: donor,
+        donorStreet: (document.getElementById('donorStreet') && document.getElementById('donorStreet').value.trim()) || "Universitätsstraße 14",
+        donorCity: (document.getElementById('donorCity') && document.getElementById('donorCity').value.trim()) || "48149 Münster",
+        donorEmail: (document.getElementById('donorEmail') && document.getElementById('donorEmail').value.trim()) || "spende@example.org",
+        purpose: (document.getElementById('purposeSelect') && document.getElementById('purposeSelect').value) || m.purposes[0].code,
+        refCode: `SP-${year}-${rand}`,
+        receiptNo: `ZB-${year}-${rand}`,
+        date: todayStr
+      };
+    }
+    return lastPledge;
+  }
+
   function openReceiptModal() {
-    if (!lastPledge) return;
-    const p = lastPledge;
+    const p = ensurePledgeData();
     const m = p.mandant;
     const amountWords = zahlInWorten(p.amount);
 
@@ -1038,11 +1087,15 @@
     `;
 
     document.getElementById('printableReceipt').innerHTML = html;
-    document.getElementById('receiptModal').classList.add('active');
+    const modal = document.getElementById('receiptModal');
+    modal.style.display = 'flex';
+    modal.classList.add('active');
   }
 
   function closeReceiptModal() {
-    document.getElementById('receiptModal').classList.remove('active');
+    const modal = document.getElementById('receiptModal');
+    modal.style.display = 'none';
+    modal.classList.remove('active');
   }
 
   function resetForm() {
@@ -1054,7 +1107,12 @@
     closeReceiptModal();
   }
 
-  // Modal Schließen bei ESC Taste
+  // Modal Schließen bei Klick auf Backdrop oder ESC Taste
+  window.addEventListener('click', (e) => {
+    const modal = document.getElementById('receiptModal');
+    if (e.target === modal) closeReceiptModal();
+  });
+
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeReceiptModal();
   });
