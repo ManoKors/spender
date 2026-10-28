@@ -90,6 +90,11 @@ und dieses Projekt hält sich an [Semantic Versioning](https://semver.org/lang/d
     - Vollständige Isolation des Dokuments im Druck-Stylesheet (Ausblenden von App-Container, Backdrop und Navigation, sodass ausschließlich die DIN-A4-Seite gedruckt wird).
     - Übernahme des amtlichen 2-Spalten-Headers (Aussteller links, Zuwendender rechts) und normgerechter Checkboxen (`☐ Ja    ☑ Nein`).
     - Neue Option *„↗ In neuem Tab öffnen“* zum isolierten Öffnen und Abspeichern der Druckseite in einem eigenständigen Browser-Tab.
+    - **Unterdrückung von Browser-Kopf-/Fußzeilen:** Konfiguration von `@page { margin: 0; }` mit inneren Seitenabständen (`padding: 16mm 20mm`), wodurch Browser (Chrome, Safari, Edge) das automatische Aufdrucken von URL, Dokumententitel und Browser-Datum unterdrücken; Ergänzung eines dezenten Hinweises für den Druckdialog.
+- **Freier Spendenbetrag (Custom Amount) im Spenden-Wizard:**
+  - Zusätzliches numerisches Eingabefeld (`#customAmountInput`) für beliebige Euro- und Cent-Beträge neben den 4 Schnellwahl-Buttons (25 €, 50 €, 100 €, 250 €).
+  - Dynamische Wechselwirkung: Manuelle Eingabe hebt Button-Aktivierung auf; Button-Klick leert das freie Eingabefeld.
+  - Erweiterung des clientseitigen Zahlwort-Konverters (`zahlInWorten`), sodass auch krumme Cent-Beträge steuerkonform in Worten auf der Zuwendungsbestätigung ausgegeben werden (z. B. `125,50 €` -> *„einhundertfünfundzwanzig Euro und fünfzig Cent“*).
 
 ### Geplant
 - Direkter PDF/A-3-Export der Zuwendungsbestätigung per Headless-Rendering oder OpenPDF/iText.
