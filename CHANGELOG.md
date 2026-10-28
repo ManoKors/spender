@@ -91,10 +91,17 @@ und dieses Projekt hält sich an [Semantic Versioning](https://semver.org/lang/d
     - Übernahme des amtlichen 2-Spalten-Headers (Aussteller links, Zuwendender rechts) und normgerechter Checkboxen (`☐ Ja    ☑ Nein`).
     - Neue Option *„↗ In neuem Tab öffnen“* zum isolierten Öffnen und Abspeichern der Druckseite in einem eigenständigen Browser-Tab.
     - **Unterdrückung von Browser-Kopf-/Fußzeilen:** Konfiguration von `@page { margin: 0; }` mit inneren Seitenabständen (`padding: 16mm 20mm`), wodurch Browser (Chrome, Safari, Edge) das automatische Aufdrucken von URL, Dokumententitel und Browser-Datum unterdrücken; Ergänzung eines dezenten Hinweises für den Druckdialog.
-- **Freier Spendenbetrag (Custom Amount) im Spenden-Wizard:**
-  - Zusätzliches numerisches Eingabefeld (`#customAmountInput`) für beliebige Euro- und Cent-Beträge neben den 4 Schnellwahl-Buttons (25 €, 50 €, 100 €, 250 €).
-  - Dynamische Wechselwirkung: Manuelle Eingabe hebt Button-Aktivierung auf; Button-Klick leert das freie Eingabefeld.
-  - Erweiterung des clientseitigen Zahlwort-Konverters (`zahlInWorten`), sodass auch krumme Cent-Beträge steuerkonform in Worten auf der Zuwendungsbestätigung ausgegeben werden (z. B. `125,50 €` -> *„einhundertfünfundzwanzig Euro und fünfzig Cent“*).
+- **Integrierter Betrags-Wahlschalter (Synchronisiertes Spenden-UX-Pattern mit hoher Editierbarkeits-Affordanz):**
+  - Zusammenführung der 4 Schnellwahl-Buttons (25 €, 50 €, 100 €, 250 €) und des Betragsfelds in eine harmonische `AmountControlGroup`.
+  - **Bidirektionale Synchronisation:**
+    - Klick auf einen Schnellwahl-Button übernimmt den Betrag sofort direkt in das Eingabefeld (`25.00`, `50.00`, etc.) und markiert den Button als aktiv.
+    - Manuelle Anpassung im Eingabefeld (z. B. auf 75 € oder 125,50 €) passt die Auswahl nahtlos an; entspricht die Eingabe einem der Buttons, wird dieser automatisch wieder aktiv.
+  - **Optimierte visuelle Affordanz als editierbares Eingabefeld:**
+    - Das Betragsfeld ist jetzt unmissverständlich als Eingabefeld erkennbar: markanter 2px-Rahmen (`#cbd5e1`), klarer Hover- & Focus-Ring (`box-shadow`), dezente innere Schattierung, Editier-Stift-Icon (`✏️`) und Badge *„✏️ Editierbares Betragsfeld“*.
+    - Ein dezenter Hilfetext erklärt die freie Tastatureingabe vs. Schnellwahltasten.
+  - **Reduzierte kognitive Last im Formular:**
+    - Der ausgeschriebene Betrag in Worten wurde aus dem Eingabeformular entfernt (verbleibt gesetzeskonform auf der amtlichen Zuwendungsbestätigung nach BMF-Muster 034122).
+  - Volle Unterstützung für Komma- und Dezimalpunkttrennung sowie automatische Formatierung bei `blur`.
 
 ### Geplant
 - Direkter PDF/A-3-Export der Zuwendungsbestätigung per Headless-Rendering oder OpenPDF/iText.
